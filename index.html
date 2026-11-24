@@ -296,6 +296,22 @@
   .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
   [hidden] { display: none !important; }
 
+  /* ===== Embedded in Canvas: the Canvas page already has the banner and module progress bar ===== */
+  html.embedded .app { max-width: none; padding: 2px 2px 24px; }
+  html.embedded .brandbar, html.embedded h1 { display: none; }
+  html.embedded .progress { border: 0; border-bottom: 1px solid #E4E4E3; border-radius: 0; padding: 0 0 12px; margin: 0 0 22px; }
+  html.embedded .progress-head { justify-content: flex-start; margin-bottom: 8px; font-size: 13px; }
+  html.embedded .progress-head strong { color: #585754; font-weight: 600; }
+  html.embedded .progress-head span { display: none; }
+  html.embedded .group3 { display: none; }
+  html.embedded .track { top: 11px; height: 2px; }
+  html.embedded .nodes button { gap: 4px; }
+  html.embedded .node { width: 24px; height: 24px; font-size: 11px; border-width: 2px; }
+  html.embedded .nodes button[aria-current="step"] .node { border-width: 2px; box-shadow: 0 0 0 3px var(--sky-tint); }
+  html.embedded .plabel { font-size: 12px; }
+  /* once Canvas has sized the frame to fit, hide the inner scrollbar entirely */
+  html.embedded.fitted, html.embedded.fitted body { overflow: hidden; }
+
   @media print {
     .progress, .actions, .stance .btns, .stance .copied, .brandbar, .tip, #s1, #s2, #s3a, #s3b, .refs, nav, #exportText, #copyHtml { display: none !important; }
     #step3, #s3c { display: block !important; }
@@ -308,6 +324,10 @@
 </style>
 </head>
 <body>
+<script>
+  /* Embedded mode: detect the Canvas iframe before anything renders */
+  if (window.self !== window.top) document.documentElement.classList.add("embedded");
+</script>
 <main class="app">
   <div class="brandbar" aria-hidden="true"></div>
   <h1>The GrAIdient</h1>
@@ -1211,7 +1231,7 @@
     });
     $("fill").style.width = (reach / 4 * 100) + "%";
     $("group3").classList.toggle("on", reach >= 2);
-    $("progText").textContent = "Part " + (cur + 1) + " of 5: " + LABELS[cur];
+    $("progText").textContent = "Step " + ["1", "2", "3a", "3b", "3c"][cur] + ": " + LABELS[cur];
     if (state.step === 3) {
       var slot = state.sub === "c" ? $("reviewSlot") : $("boardSlotA");
       if (board.parentNode !== slot) slot.appendChild(board);
@@ -1230,7 +1250,12 @@
     if (step === 3 && state.sub === "b") buildNotes();
     save(); render();
     if (step === 3 && state.sub === "c") buildReview();
-    try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch (e) { window.scrollTo(0, 0); }
+    if (window.self !== window.top) {
+      // embedded: ask Canvas to scroll the page back to the top of the activity
+      try { window.parent.postMessage(JSON.stringify({ subject: "lti.scrollToTop" }), "*"); } catch (e) {}
+    } else {
+      try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch (e) { window.scrollTo(0, 0); }
+    }
   }
   // if a step was placed and then all steps changed, re-lock later sub-steps when needed
   function allPlaced() { return cleanSteps().every(function (s) { return state.pos[s.id]; }); }
@@ -1275,29 +1300,29 @@
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(render);
 })();
 </script>
-  <script>
+<script>
+  /* Canvas auto-height: tell Canvas how tall the activity is so the page has a single scrollbar */
   (function () {
-    if (window.parent === window) return; // only runs when embedded
-    var lastHeight = 0;
-    function sendHeight() {
-      var h = Math.ceil(document.documentElement.scrollHeight);
-      if (Math.abs(h - lastHeight) < 2) return;
-      lastHeight = h;
-      window.parent.postMessage(JSON.stringify({ subject: 'lti.frameResize', height: h }), '*');
+    if (window.self === window.top) return;
+    var app = document.querySelector(".app");
+    var last = 0, timer = null;
+    function contentHeight() { return Math.ceil(app.getBoundingClientRect().height) + 4; }
+    function send() {
+      var h = contentHeight();
+      if (Math.abs(h - last) < 3) return;
+      last = h;
+      try { window.parent.postMessage(JSON.stringify({ subject: "lti.frameResize", height: h }), "*"); } catch (e) {}
+      // If Canvas resized the frame to match, hide the inner scrollbar
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        if (Math.abs(window.innerHeight - h) <= 40) document.documentElement.classList.add("fitted");
+      }, 700);
     }
-    window.addEventListener('load', sendHeight);
-    if ('ResizeObserver' in window) new ResizeObserver(sendHeight).observe(document.body);
-    else setInterval(sendHeight, 500);
-
-    // When the learner moves to a new step, scroll Canvas back to the top of the activity
-    document.addEventListener('click', function (e) {
-      var btn = e.target.closest('button');
-      if (btn && /next|back|start over/i.test(btn.textContent)) {
-        setTimeout(function () {
-          window.parent.postMessage(JSON.stringify({ subject: 'lti.scrollToTop' }), '*');
-        }, 50);
-      }
-    });
+    if ("ResizeObserver" in window) new ResizeObserver(send).observe(app);
+    else setInterval(send, 400);
+    window.addEventListener("load", send);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(send);
+    send();
   })();
 </script>
 </body>
