@@ -262,6 +262,9 @@
   .patterns { background: #E8F3F9; border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; }
   .patterns ul { margin: 6px 0 0; padding-left: 20px; }
   .patterns li { margin-bottom: 4px; }
+  .patterns h3 { margin: 0 0 6px; }
+  .patterns p { margin: 0 0 10px; }
+  .patterns p.pq { margin: 0; }
   .refl { margin-bottom: 16px; }
   .refl label { font-weight: 700; display: block; margin-bottom: 6px; }
   .stance { background: var(--cardinal); color: var(--white); border-radius: 14px; padding: 20px 24px; margin: 22px 0 10px; }
@@ -507,7 +510,7 @@
     <div id="s3c" hidden>
       <div class="panel-head">
         <h2>Step 3c: Review your GrAIdient and write your stance</h2>
-        <p>Look across your GrAIdient for patterns, then answer the questions below. These are the Touchpoint 1 questions from your playbook.</p>
+        <p>Review the summary of your GrAIdient, then answer the questions below. These are the Touchpoint 1 questions from your playbook.</p>
       </div>
       <div class="assign-pill" id="assignPill4"></div>
       <div id="reviewSlot"></div>
@@ -888,14 +891,48 @@
     var first = cleanSteps().slice(0, Math.ceil(total / 2)).map(function (s) { return zoneIdx(state.pos[s.id].x); });
     var last = cleanSteps().slice(Math.ceil(total / 2)).map(function (s) { return zoneIdx(state.pos[s.id].x); });
     var avg = function (a) { return a.length ? a.reduce(function (x, y) { return x + y; }, 0) / a.length : 0; };
-    var p = "<h3>Look for patterns</h3><ul>";
-    p += "<li>You placed <strong>" + greyN + " of " + total + "</strong> steps in the gray area" + (greyN ? "." : ". Is anything about these steps really that clear-cut?") + "</li>";
-    if (g[0].length) p += "<li><strong>Totally fine:</strong> " + g[0].map(function (s) { return "Step " + stepNum(s.id); }).join(", ") + ". What do these steps have in common?</li>";
-    if (g[4].length) p += "<li><strong>Crosses a line:</strong> " + g[4].map(function (s) { return "Step " + stepNum(s.id); }).join(", ") + ". Are these the steps where the core learning happens?</li>";
-    if (total >= 4 && Math.abs(avg(first) - avg(last)) >= 1) {
-      p += "<li>Your comfort with AI shifts across the assignment: early steps lean toward <strong>" + (avg(first) < avg(last) ? "Totally fine" : "Crosses a line") + "</strong> and later steps toward <strong>" + (avg(first) < avg(last) ? "Crosses a line" : "Totally fine") + "</strong>. Why might that be?</li>";
+    // --- adaptive summary: grammar adjusts to what the learner placed ---
+    function andList(a) { return a.length < 2 ? (a[0] || "") : a.length === 2 ? a[0] + " and " + a[1] : a.slice(0, -1).join(", ") + ", and " + a[a.length - 1]; }
+    function stepRef(list) {
+      if (list.length === 1) return named(list[0]);
+      var nums = list.map(function (s) { return stepNum(s.id); }).sort(function (a, b) { return a - b; });
+      return (nums.length === 1 ? "Step " : "Steps ") + andList(nums.map(String));
     }
-    p += "</ul>";
+    function short(t) { t = String(t).trim(); return t.length > 48 ? t.slice(0, 45).replace(/\s+\S*$/, "") + "…" : t; }
+    function named(s) { return "Step " + stepNum(s.id) + " (“" + esc(short(s.text)) + "”)"; }
+
+    var placed = cleanSteps().filter(function (s) { return state.pos[s.id]; })
+      .sort(function (a, b) { return state.pos[a.id].x - state.pos[b.id].x; });
+    var sum = [], qs = [];
+
+    // 1. Where the steps landed
+    var parts = [];
+    if (g[0].length) parts.push(g[0].length + " at <strong>Totally fine</strong>");
+    if (greyN) parts.push(greyN + " in the gray area");
+    if (g[4].length) parts.push(g[4].length + " at <strong>Crosses a line</strong>");
+    sum.push("Of your " + total + " steps, you placed " + andList(parts) + ".");
+
+    // 2. Overall shape
+    var shift = total >= 4 ? avg(last) - avg(first) : 0;
+    if (shift >= 1) sum.push("Your comfort with AI drops as the assignment goes on: later steps sit closer to <strong>Crosses a line</strong> than earlier ones.");
+    else if (shift <= -1) sum.push("Your comfort with AI rises as the assignment goes on: later steps sit closer to <strong>Totally fine</strong> than earlier ones.");
+    else if (greyN / total >= 0.6) sum.push("Most of your steps are in the gray area, so your comfort likely depends on <em>how</em> AI is used, not just whether it is used.");
+    else if (!greyN) sum.push("You saw every step as clear-cut, either fine or off-limits.");
+
+    // 3. Most and least comfortable steps
+    if ((!g[0].length || !g[4].length) && placed.length >= 2 && state.pos[placed[placed.length - 1].id].x - state.pos[placed[0].id].x >= 0.2) {
+      sum.push("You were most comfortable with AI for " + named(placed[0]) + " and least comfortable for " + named(placed[placed.length - 1]) + ".");
+    }
+
+    // Questions (only the ones that apply)
+    if (g[0].length) qs.push("What makes " + stepRef(g[0]) + " feel fine to do with AI?");
+    if (g[4].length) qs.push((g[4].length === 1 ? "Is " : "Are ") + stepRef(g[4]) + " where the core learning happens?");
+    if (greyN) qs.push("For " + (greyN === 1 ? "the step" : "the steps") + " in the gray area, what would make AI use feel more acceptable, or less?");
+    else qs.push("Is anything about these steps really that clear-cut?");
+    if (shift >= 1 || shift <= -1) qs.push("Why might your comfort change from the beginning of the assignment to the end?");
+
+    var p = "<h3>Your GrAIdient at a glance</h3><p>" + sum.join(" ") + "</p>";
+    p += '<p class="pq"><strong>Questions to consider</strong></p><ul>' + qs.slice(0, 3).map(function (q) { return "<li>" + q + "</li>"; }).join("") + "</ul>";
     $("patterns").innerHTML = p;
 
     // gray-area table (mirrors playbook)
