@@ -55,7 +55,7 @@
   /* Header */
   .brandbar { height: 6px; background: var(--cardinal); border-radius: 3px; margin-bottom: 18px; }
   .eyebrow { font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--cardinal); margin: 0 0 4px; }
-  h1 { font-family: "Source Serif 4", Georgia, serif; font-weight: 700; font-size: clamp(28px, 4.5vw, 40px); line-height: 1.1; margin: 0 0 8px; }
+  h1 { font-family: "Source Serif 4", Georgia, serif; font-weight: 700; font-size: clamp(28px, 4.5vw, 40px); line-height: 1.1; margin: 0 0 16px; }
   h2 { font-family: "Source Serif 4", Georgia, serif; font-weight: 700; font-size: 24px; line-height: 1.2; margin: 0 0 6px; }
   h3 { font-size: 18px; margin: 0 0 6px; }
   .lede { color: var(--cool-grey); margin: 0 0 20px; max-width: 72ch; }
@@ -161,25 +161,20 @@
   .assign-pill b { color: var(--cardinal); }
   .sticky-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; margin: 0 0 16px; }
   .sticky {
-    position: relative; border-radius: 6px; padding: 10px 10px 8px; min-height: 140px; border-top-width: 6px; border-top-style: solid;
-    box-shadow: 0 2px 4px rgba(46,45,41,.12), 0 6px 12px rgba(46,45,41,.06);
+    position: relative; border-radius: 6px; padding: 10px 10px 8px; min-height: 140px;
+    background: var(--white); border: 1px solid var(--stone-light);
+    box-shadow: 0 2px 4px rgba(46,45,41,.10), 0 6px 12px rgba(46,45,41,.05);
     display: flex; flex-direction: column; gap: 6px;
   }
-  .sticky .lbl { font-size: 13px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
-  .sticky textarea { background: rgba(255,255,255,.55); border: 1px solid rgba(46,45,41,.12); min-height: 70px; flex: 1; font-size: 15px; padding: 6px 8px; }
+  .sticky .lbl { font-size: 13px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--cool-grey); }
+  .sticky textarea { background: var(--white); border: 1px solid #C4C4C4; min-height: 70px; flex: 1; font-size: 15px; padding: 6px 8px; }
   .sticky .tools { display: flex; gap: 4px; justify-content: flex-end; }
-  .icon-btn { font: inherit; font-size: 14px; border: 0; background: rgba(255,255,255,.7); color: var(--black); width: 30px; height: 28px; border-radius: 6px; cursor: pointer; }
+  .icon-btn { font: inherit; font-size: 14px; border: 0; background: var(--fog); color: var(--black); width: 30px; height: 28px; border-radius: 6px; cursor: pointer; }
   .icon-btn:hover { background: var(--white); }
   .icon-btn:disabled { opacity: .35; cursor: default; }
   .add-row { display: flex; gap: 10px; align-items: stretch; }
   .add-row input { flex: 1; }
 
-  /* sticky color set (Stanford accent tints) */
-  .c0 { background: #DDF0F2; border-color: #007C92; } .c0 .lbl { color: #006274; }
-  .c1 { background: #EEF0DC; border-color: #8F993E; } .c1 .lbl { color: #5E6627; }
-  .c2 { background: #FBE4DF; border-color: #E04F39; } .c2 .lbl { color: #A3311F; }
-  .c3 { background: #FDECD6; border-color: #E98300; } .c3 .lbl { color: #A34D0A; }
-  .c4 { background: #FFF5CC; border-color: #D9B400; } .c4 .lbl { color: #6E5B00; }
 
   /* STEP 3: board */
   .board {
@@ -198,7 +193,7 @@
   .axis-labels div { font-weight: 700; font-size: 14px; line-height: 1.15; padding: 0 2px; }
   .axis-labels .dot { display: block; width: 12px; height: 12px; border-radius: 50%; margin: 0 auto 4px; }
   @media (max-width: 700px) { .axis-labels div { font-size: 11.5px; } }
-  .board.drop-hover { box-shadow: 0 0 0 3px var(--cardinal-light) inset; }
+  .board.drop-hover { box-shadow: 0 0 0 3px var(--cool-grey) inset; }
   .board-layer { position: absolute; inset: 0; }
 
   .tray-wrap { margin-top: 16px; }
@@ -209,20 +204,20 @@
     display: flex; flex-wrap: wrap; gap: 10px; min-height: calc(var(--card-h) + 24px);
     padding: 12px; border: 2px dashed var(--stone-light); border-radius: 14px; user-select: none; -webkit-user-select: none;
   }
-  .tray:empty::after { content: "All steps are on the GrAIdient."; color: var(--z-fine); font-weight: 600; align-self: center; }
+  .tray:empty::after { content: "All steps are on the GrAIdient."; color: var(--black); font-weight: 600; align-self: center; }
 
   .chip {
-    width: var(--card-w); height: var(--card-h); border-radius: 6px; border-top-width: 5px; border-top-style: solid; padding: 5px 7px; user-select: none; -webkit-user-select: none;
+    width: var(--card-w); height: var(--card-h); border-radius: 6px; background: var(--white); border: 1px solid var(--stone-light); padding: 7px 7px 5px; user-select: none; -webkit-user-select: none;
     box-shadow: 0 1px 2px rgba(46,45,41,.15), 0 3px 8px rgba(46,45,41,.08);
     cursor: grab; touch-action: none; position: relative; overflow: hidden;
     font-size: 12.5px; line-height: 1.2; color: var(--black);
   }
-  .chip .num { display: block; font-weight: 700; font-size: 11px; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 2px; }
+  .chip .num { display: block; font-weight: 700; font-size: 11px; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 2px; color: var(--cool-grey); }
   .chip .txt { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
   @media (max-width: 700px) { .chip { font-size: 10.5px; padding: 4px 5px; } .chip .num { font-size: 10px; } .chip .txt { -webkit-line-clamp: 4; } }
-  .board .chip { position: absolute; }
+  .board .chip { position: absolute; border-top-width: 5px; padding-top: 3px; }
   .chip.dragging { cursor: grabbing; position: fixed; z-index: 1000; box-shadow: 0 10px 24px rgba(46,45,41,.28); transform: rotate(-2deg); }
-  .chip.has-note::after { content: "\270E"; position: absolute; right: 5px; bottom: 3px; font-size: 12px; color: var(--cardinal); }
+  .chip.has-note::after { content: "\270E"; position: absolute; right: 5px; bottom: 3px; font-size: 12px; color: var(--cool-grey); }
 
   /* 3b: reasoning */
   .guide { background: var(--white); border: 1px solid #E4E4E3; border-radius: 10px; padding: 12px 18px; margin: 0 0 20px; }
@@ -237,20 +232,33 @@
   .note-row label .num { color: var(--cool-grey); font-weight: 600; }
   .note-row textarea { min-height: 56px; }
 
+  /* 3b: step picker */
+  .picker { margin: 0 0 20px; }
+  .pick-instr { display: flex; gap: 8px; align-items: baseline; margin: 0 0 12px; padding: 10px 14px; background: var(--sky-tint); border-radius: 10px; font-weight: 700; color: var(--black); }
+  .pick-instr span { color: var(--black); font-size: 18px; }
+  .pick-group { margin-bottom: 14px; }
+  .pick-group h3 { font-size: 15px; margin: 0 0 2px; }
+  .pick-group .sub { font-size: 14px; color: var(--cool-grey); margin: 0 0 8px; }
+  .pick-group.grey { background: #EFEFEE; border: 2px dotted #9A9A97; border-radius: 12px; padding: 12px 14px; }
+  .pick-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pick {
+    font: inherit; font-size: 15px; line-height: 1.3; text-align: left; cursor: pointer; color: var(--black);
+    display: inline-flex; align-items: flex-start; gap: 8px; max-width: 100%;
+    background: var(--white); border: 1px solid #C4C4C4; border-radius: 10px; padding: 8px 12px 8px 10px;
+  }
+  .pick:hover { border-color: var(--black); }
+  .pick .box { flex: 0 0 auto; width: 18px; height: 18px; margin-top: 1px; border: 2px solid #8A8A87; border-radius: 4px; display: grid; place-items: center; font-size: 12px; color: var(--white); }
+  .pick[aria-pressed="true"] { border-color: var(--black); box-shadow: 0 0 0 1px var(--black); background: var(--fog); }
+  .pick[aria-pressed="true"] .box { background: var(--black); border-color: var(--black); }
+  .pick .ztag { display: block; font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; margin-top: 2px; }
+  .note-card { border: 1px solid #E4E4E3; border-left: 4px solid; border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+  .note-card .head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; margin-bottom: 6px; }
+  .note-card label { font-weight: 700; }
+  .note-card .ztag { display: inline-flex; gap: 5px; align-items: center; font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; margin-left: 6px; }
+  .empty-notes { border: 2px dashed var(--stone-light); border-radius: 12px; padding: 16px; color: var(--cool-grey); text-align: center; }
+
   /* 3c: review */
   .review-card { border: 1px solid var(--stone-light); border-radius: 14px; padding: 18px 20px; margin-bottom: 18px; }
-  .dist { display: flex; height: 26px; border-radius: 6px; overflow: hidden; margin: 10px 0 6px; background: var(--fog); }
-  .dist div { height: 100%; display: grid; place-items: center; color: #fff; font-size: 13px; font-weight: 700; min-width: 0; }
-  .dist-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 14px; color: var(--cool-grey); }
-  .dist-legend span { display: inline-flex; gap: 6px; align-items: center; }
-  .map-cols { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 14px; }
-  @media (max-width: 760px) { .map-cols { grid-template-columns: 1fr; } }
-  .map-col { background: var(--fog); border-radius: 10px; padding: 10px; min-height: 80px; }
-  .map-col.grey { background: #ECECEB; }
-  .map-col h4 { margin: 0 0 8px; font-size: 13px; letter-spacing: .05em; text-transform: uppercase; display: flex; gap: 6px; align-items: center; }
-  .map-item { background: var(--white); border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; font-size: 14px; line-height: 1.35; border-left: 4px solid; }
-  .map-item .why { display: block; margin-top: 4px; color: var(--cool-grey); font-style: italic; }
-  .map-empty { font-size: 13px; color: var(--cool-grey); font-style: italic; }
   .patterns { background: #E8F3F9; border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; }
   .patterns ul { margin: 6px 0 0; padding-left: 20px; }
   .patterns li { margin-bottom: 4px; }
@@ -302,12 +310,10 @@
 <body>
 <main class="app">
   <div class="brandbar" aria-hidden="true"></div>
-  <p class="eyebrow">AI Literacy &middot; Activity</p>
   <h1>The GrAIdient</h1>
-  <p class="lede">Develop your initial stance on AI in education. Identify an assignment, break it into the steps a student would take, then decide how you&rsquo;d feel if a student used AI for each step.</p>
 
   <nav class="progress" aria-label="Activity progress">
-    <div class="progress-head"><strong>The GrAIdient</strong><span id="progText"></span></div>
+    <div class="progress-head"><strong>Your progress</strong><span id="progText"></span></div>
     <div class="progress-body">
       <div class="group3" id="group3" aria-hidden="true"><span><b>Step 3: Map &amp; reflect</b></span></div>
       <div class="track" aria-hidden="true"><div class="fill" id="fill"></div></div>
@@ -454,8 +460,10 @@
     <div id="s3b" hidden>
       <div class="panel-head">
         <h2>Step 3b: Explain your reasoning</h2>
-        <p>Choose a few steps, especially those in the gray area or ones you went back and forth on, and explain why you placed them where you did.</p>
+        <p>Choose a few steps to explain, especially those in the gray area or ones you went back and forth on. Then explain why you placed them where you did.</p>
       </div>
+      <p class="pick-instr"><span aria-hidden="true">&#9745;</span> Select the steps to add your reasoning. A reasoning box appears below for each step you select.</p>
+      <div class="picker" id="picker"></div>
       <div class="guide">
         <p>Questions to guide your notes</p>
         <ul>
@@ -465,6 +473,7 @@
           <li>What would make this use acceptable? What would make it cross a line?</li>
         </ul>
       </div>
+      <h3 style="margin:0 0 8px">Your reasoning</h3>
       <div id="notes"></div>
       <div class="actions">
         <button type="button" class="btn secondary" id="backA">Back to the GrAIdient</button>
@@ -579,7 +588,7 @@
   var STORE_KEY = "ail-graidient-v1";
 
   /* ---------------- state ---------------- */
-  function fresh() { return { preset: null, own: "", steps: [], pos: {}, why: {}, refl: { values: "", ethical: "" }, step: 1, sub: "a", maxStep: 1, maxSub: "a", seq: 0 }; }
+  function fresh() { return { preset: null, own: "", steps: [], pos: {}, why: {}, refl: { values: "", ethical: "", stance: "" }, chosen: {}, step: 1, sub: "a", maxStep: 1, maxSub: "a", seq: 0 }; }
   function load() { try { var s = JSON.parse(localStorage.getItem(STORE_KEY)); return s && s.steps ? s : null; } catch (e) { return null; } }
   function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {} }
   var state = load() || fresh();
@@ -593,7 +602,6 @@
   function assignment() { return state.own.trim() || (state.preset != null ? SCENARIOS[state.preset] : ""); }
   function stepNum(id) { for (var i = 0; i < state.steps.length; i++) if (state.steps[i].id === id) return i + 1; return 0; }
   function stepById(id) { for (var i = 0; i < state.steps.length; i++) if (state.steps[i].id === id) return state.steps[i]; return null; }
-  function colorOf(id) { return "c" + ((stepNum(id) - 1) % 5); }
   function cleanSteps() { return state.steps.filter(function (s) { return s.text.trim(); }); }
 
   /* ================= STEP 1 ================= */
@@ -627,7 +635,7 @@
   function buildStickies(focusId) {
     var html = "";
     state.steps.forEach(function (s, i) {
-      html += '<div class="sticky c' + (i % 5) + '" data-id="' + s.id + '">' +
+      html += '<div class="sticky" data-id="' + s.id + '">' +
         '<span class="lbl">Step ' + (i + 1) + "</span>" +
         '<label class="sr-only" for="st-' + s.id + '">Step ' + (i + 1) + "</label>" +
         '<textarea id="st-' + s.id + '" data-step="' + s.id + '" rows="3">' + esc(s.text) + "</textarea>" +
@@ -699,7 +707,8 @@
     Object.keys(chips).forEach(function (id) { if (!stepById(id) || !stepById(id).text.trim()) { chips[id].remove(); delete chips[id]; } });
     steps.forEach(function (s) {
       var el = chipFor(s), p = state.pos[s.id], n = stepNum(s.id);
-      el.className = "chip " + colorOf(s.id) + (state.why[s.id] && state.why[s.id].trim() ? " has-note" : "");
+      el.className = "chip" + (state.why[s.id] && state.why[s.id].trim() ? " has-note" : "");
+      el.style.borderTopColor = p ? ZONES[zoneIdx(p.x)].dot : "";
       el.querySelector(".num").textContent = "Step " + n;
       el.querySelector(".txt").textContent = s.text;
       var w = (state.why[s.id] || "").trim();
@@ -795,21 +804,54 @@
     g.forEach(function (list) { list.sort(function (a, b) { return state.pos[a.id].x - state.pos[b.id].x; }); });
     return g;
   }
-  function buildNotes() {
-    var g = grouped(), html = "";
-    // grey-area groups first, then the ends
-    [2, 3, 1, 0, 4].forEach(function (zi) {
-      var list = g[zi], z = ZONES[zi];
-      if (!list.length) return;
-      html += '<div class="group"><p class="group-title" style="color:' + z.text + '"><span class="zdot" style="background:' + z.dot + '"></span>' + z.label + (GREY[z.id] ? ' <span class="tag">Gray area</span>' : "") + "</p>";
-      list.forEach(function (s) {
-        html += '<div class="note-row"><label for="why-' + s.id + '"><span class="num">Step ' + stepNum(s.id) + ":</span> " + esc(s.text) + "</label>" +
-          '<textarea id="why-' + s.id + '" data-why="' + s.id + '" rows="2" placeholder="' + (GREY[z.id] ? "Why is this one in the gray area for you?" : "Optional: why here?") + '">' + esc(state.why[s.id] || "") + "</textarea></div>";
-      });
-      html += "</div>";
-    });
-    $("notes").innerHTML = html;
+  function pickBtn(s) {
+    var z = ZONES[zoneIdx(state.pos[s.id].x)], on = !!state.chosen[s.id];
+    return '<button type="button" class="pick" data-pick="' + s.id + '" aria-pressed="' + on + '"><span class="box" aria-hidden="true">' + (on ? "✓" : "") + "</span>" +
+      "<span><b>Step " + stepNum(s.id) + ":</b> " + esc(s.text) +
+      '<span class="ztag" style="color:' + z.text + '">' + z.label + "</span></span></button>";
   }
+  function buildPicker() {
+    var g = grouped(), grey = g[1].concat(g[2], g[3]), ends = g[0].concat(g[4]);
+    var html = '<div class="pick-group grey"><h3>Steps in the gray area (' + grey.length + ")</h3>" +
+      '<p class="sub">' + (grey.length ? "These are usually the most worth explaining." : "You didn&rsquo;t place any steps in the gray area.") + "</p>" +
+      '<div class="pick-list">' + grey.map(pickBtn).join("") + "</div></div>";
+    if (ends.length) {
+      html += '<div class="pick-group"><h3>Steps you placed at Totally fine or Crosses a line (' + ends.length + ")</h3>" +
+                '<div class="pick-list">' + ends.map(pickBtn).join("") + "</div></div>";
+    }
+    $("picker").innerHTML = html;
+  }
+  function buildNoteCards() {
+    var chosen = cleanSteps().filter(function (s) { return state.chosen[s.id] && state.pos[s.id]; });
+    if (!chosen.length) { $("notes").innerHTML = '<div class="empty-notes">Choose one or more steps above to explain your reasoning.</div>'; return; }
+    $("notes").innerHTML = chosen.map(function (s) {
+      var z = ZONES[zoneIdx(state.pos[s.id].x)], grey = GREY[z.id];
+      return '<div class="note-card" style="border-left-color:' + z.dot + '"><div class="head"><div><label for="why-' + s.id + '">Step ' + stepNum(s.id) + ": " + esc(s.text) + "</label>" +
+        '<span class="ztag" style="color:' + z.text + '"><span class="zdot" style="background:' + z.dot + '"></span>' + z.label + "</span></div>" +
+        '<button type="button" class="linkbtn" data-unpick="' + s.id + '" style="font-size:14px;white-space:nowrap">Remove</button></div>' +
+        '<textarea id="why-' + s.id + '" data-why="' + s.id + '" rows="2" placeholder="' + (grey ? "Why is this one in the gray area for you?" : "Why did you place it here?") + '">' + esc(state.why[s.id] || "") + "</textarea></div>";
+    }).join("");
+  }
+  function buildNotes() {
+    if (!state.chosen) state.chosen = {};
+    Object.keys(state.why).forEach(function (id) { if ((state.why[id] || "").trim()) state.chosen[id] = true; });
+    buildPicker(); buildNoteCards();
+  }
+  $("picker").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-pick]"); if (!b) return;
+    var id = b.dataset.pick;
+    state.chosen[id] = !state.chosen[id];
+    save(); buildPicker(); buildNoteCards();
+    var again = $("picker").querySelector('[data-pick="' + id + '"]'); if (again) again.focus();
+    if (state.chosen[id]) announce("Step " + stepNum(id) + " added. A reasoning box is below.");
+  });
+  $("notes").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-unpick]"); if (!b) return;
+    var id = b.dataset.unpick;
+    state.chosen[id] = false; state.why[id] = "";
+    save(); buildPicker(); buildNoteCards();
+    announce("Step " + stepNum(id) + " removed.");
+  });
   $("notes").addEventListener("input", function (e) { var id = e.target.dataset.why; if (!id) return; state.why[id] = e.target.value; save(); });
 
   /* ================= STEP 3c ================= */
@@ -929,7 +971,6 @@
   });
 
   /* ---------- GrAIdient image (drawn from the live board) ---------- */
-  var CHIP_COLORS = [["#DDF0F2", "#007C92", "#006274"], ["#EEF0DC", "#8F993E", "#5E6627"], ["#FBE4DF", "#E04F39", "#A3311F"], ["#FDECD6", "#E98300", "#A34D0A"], ["#FFF5CC", "#D9B400", "#6E5B00"]];
   function wrap(ctx, text, maxW, maxLines) {
     var words = String(text).split(/\s+/), lines = [], line = "";
     words.forEach(function (w) {
@@ -991,11 +1032,12 @@
       var el = chips[s.id]; if (!el || !state.pos[s.id]) return;
       var cxp = (el.offsetLeft + c.w / 2) * scaleX, cyp = (el.offsetTop + c.h / 2) * scaleY;
       var x = Math.max(4, Math.min(bw - cw - 4, cxp - cw / 2)) + ox, y = Math.max(30, Math.min(bh - 78 - ch, cyp - ch / 2)) + oy;
-      var col = CHIP_COLORS[(stepNum(s.id) - 1) % 5];
+      var zc = ZONES[zoneIdx(state.pos[s.id].x)].dot;
       ctx.save(); ctx.shadowColor = "rgba(46,45,41,.18)"; ctx.shadowBlur = 6; ctx.shadowOffsetY = 2;
-      ctx.fillStyle = col[0]; rrect(ctx, x, y, cw, ch, 6); ctx.fill(); ctx.restore();
-      ctx.save(); rrect(ctx, x, y, cw, ch, 6); ctx.clip(); ctx.fillStyle = col[1]; ctx.fillRect(x, y, cw, 5); ctx.restore();
-      ctx.fillStyle = col[2]; ctx.font = "700 11px " + SANS; ctx.fillText("STEP " + stepNum(s.id), x + 7, y + 10);
+      ctx.fillStyle = "#FFFFFF"; rrect(ctx, x, y, cw, ch, 6); ctx.fill(); ctx.restore();
+      ctx.strokeStyle = "#DAD7CB"; ctx.lineWidth = 1; rrect(ctx, x, y, cw, ch, 6); ctx.stroke();
+      ctx.save(); rrect(ctx, x, y, cw, ch, 6); ctx.clip(); ctx.fillStyle = zc; ctx.fillRect(x, y, cw, 5); ctx.restore();
+      ctx.fillStyle = "#53565A"; ctx.font = "700 11px " + SANS; ctx.fillText("STEP " + stepNum(s.id), x + 7, y + 10);
       ctx.fillStyle = "#2E2D29"; ctx.font = "12.5px " + SANS;
       wrap(ctx, s.text, cw - 14, 3).forEach(function (l, j) { ctx.fillText(l, x + 7, y + 26 + j * 15); });
     });
