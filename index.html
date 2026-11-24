@@ -1275,5 +1275,30 @@
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(render);
 })();
 </script>
+  <script>
+  (function () {
+    if (window.parent === window) return; // only runs when embedded
+    var lastHeight = 0;
+    function sendHeight() {
+      var h = Math.ceil(document.documentElement.scrollHeight);
+      if (Math.abs(h - lastHeight) < 2) return;
+      lastHeight = h;
+      window.parent.postMessage(JSON.stringify({ subject: 'lti.frameResize', height: h }), '*');
+    }
+    window.addEventListener('load', sendHeight);
+    if ('ResizeObserver' in window) new ResizeObserver(sendHeight).observe(document.body);
+    else setInterval(sendHeight, 500);
+
+    // When the learner moves to a new step, scroll Canvas back to the top of the activity
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest('button');
+      if (btn && /next|back|start over/i.test(btn.textContent)) {
+        setTimeout(function () {
+          window.parent.postMessage(JSON.stringify({ subject: 'lti.scrollToTop' }), '*');
+        }, 50);
+      }
+    });
+  })();
+</script>
 </body>
 </html>
