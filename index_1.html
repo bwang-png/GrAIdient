@@ -1,0 +1,1351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The GrAIdient</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
+<style>
+  /* Stanford identity colors */
+  :root {
+    --cardinal: #8C1515;
+    --cardinal-light: #B83A4B;
+    --cardinal-dark: #820000;
+    --black: #2E2D29;
+    --cool-grey: #53565A;
+    --white: #FFFFFF;
+    --fog: #F4F4F4;
+    --stone-light: #DAD7CB;
+    --sky-tint: #B9DEEF;
+    --sky-line: #ACCFE2;
+    --cardinal-tint: #F6E8E8;
+
+    /* GrAIdient zone colors (match the Canvas continuum) */
+    --z-fine: #175E54;
+    --z-mostly: #5E6627;
+    --z-mostly-dot: #8F993E;
+    --z-unsure: #585754;
+    --z-unsure-dot: #ABABA9;
+    --z-sketchy: #A34D0A;
+    --z-sketchy-dot: #E98300;
+    --z-line: #8C1515;
+
+    --card-w: 132px;
+    --card-h: 78px;
+    --radius: 8px;
+  }
+  @media (max-width: 700px) {
+    :root { --card-w: 74px; --card-h: 76px; }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--white);
+    color: var(--black);
+    font-family: "Source Sans 3", "Source Sans Pro", "Helvetica Neue", Arial, sans-serif;
+    font-size: 17px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .app { max-width: 1080px; margin: 0 auto; padding: 20px 16px 40px; }
+
+  /* Header */
+  .brandbar { height: 6px; background: var(--cardinal); border-radius: 3px; margin-bottom: 18px; }
+  .eyebrow { font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--cardinal); margin: 0 0 4px; }
+  h1 { font-family: "Source Serif 4", Georgia, serif; font-weight: 700; font-size: clamp(28px, 4.5vw, 40px); line-height: 1.1; margin: 0 0 16px; }
+  h2 { font-family: "Source Serif 4", Georgia, serif; font-weight: 700; font-size: 24px; line-height: 1.2; margin: 0 0 6px; }
+  h3 { font-size: 18px; margin: 0 0 6px; }
+  .lede { color: var(--cool-grey); margin: 0 0 20px; max-width: 72ch; }
+  .muted { color: var(--cool-grey); }
+
+  /* Stepper */
+  /* Progress line */
+  .progress { margin: 4px 0 26px; padding: 12px 14px 10px; border: 1px solid #E4E4E3; border-radius: 16px; }
+  .progress-head { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 2px 12px; font-size: 13px; margin-bottom: 8px; }
+  .progress-head strong { color: var(--cardinal); }
+  .progress-head span { color: #585754; }
+  .progress-body { position: relative; }
+  .group3 { position: relative; margin-left: 40%; height: 22px; }
+  .group3 span {
+    position: absolute; left: 10%; right: 10%; top: 0; height: 16px;
+    border: 2px solid #C4C4C4; border-bottom: 0; border-radius: 8px 8px 0 0;
+    font-size: 12px; font-weight: 700; color: #585754; text-align: center; line-height: 1;
+  }
+  .group3 span b { position: relative; top: -8px; background: var(--white); padding: 0 6px; font-weight: 700; }
+  .group3.on span { border-color: var(--cardinal); }
+  .group3.on span b { color: var(--cardinal); }
+  .track { position: absolute; left: 10%; right: 10%; top: 40px; height: 3px; background: #C4C4C4; border-radius: 2px; }
+  .track .fill { height: 100%; width: 0; background: var(--cardinal); border-radius: 2px; transition: width .4s ease; }
+  .nodes { display: grid; grid-template-columns: repeat(5, 1fr); list-style: none; margin: 0; padding: 0; position: relative; }
+  .nodes button {
+    font: inherit; background: none; border: 0; padding: 0; width: 100%; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--cool-grey);
+  }
+  .nodes button:disabled { cursor: not-allowed; }
+  .node {
+    width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--white); border: 2px solid #C4C4C4; color: #8A8A87; font-weight: 700; font-size: 14px;
+    transition: background .25s, border-color .25s;
+  }
+  .plabel { font-size: 13px; line-height: 1.2; text-align: center; max-width: 13ch; }
+  .nodes button.done .node { background: var(--cardinal); border-color: var(--cardinal); color: var(--white); }
+  .nodes button.done .plabel { color: var(--black); }
+  .nodes button[aria-current="step"] .node {
+    background: var(--white); border: 3px solid var(--cardinal); color: var(--cardinal);
+    box-shadow: 0 0 0 5px var(--sky-tint);
+  }
+  .nodes button[aria-current="step"] .plabel { color: var(--cardinal); font-weight: 700; }
+  .nodes button:not(:disabled):hover .node { border-color: var(--cardinal); }
+  @media (max-width: 600px) {
+    .plabel { font-size: 11px; }
+    .node { width: 30px; height: 30px; font-size: 12px; }
+    .track { top: 37px; }
+    .group3 span { font-size: 10.5px; }
+  }
+
+  :focus-visible { outline: 3px solid #4298B5; outline-offset: 2px; }
+
+  .panel-head { margin-bottom: 14px; }
+  .panel-head p { margin: 0; color: var(--cool-grey); max-width: 70ch; }
+  .tip { font-size: 15px; color: var(--cool-grey); margin: 8px 0 0; }
+  .kbd { font-size: 13px; border: 1px solid var(--stone-light); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; background: var(--white); }
+
+  /* Buttons */
+  .actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 22px; flex-wrap: wrap; }
+  .actions .right { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-left: auto; }
+  .btn {
+    font: inherit; font-weight: 700; font-size: 16px; border-radius: 8px; padding: 10px 20px; cursor: pointer;
+    border: 2px solid var(--cardinal); background: var(--cardinal); color: var(--white);
+  }
+  .btn:hover { background: var(--cardinal-dark); border-color: var(--cardinal-dark); }
+  .btn.secondary { background: var(--white); color: var(--cardinal); }
+  .btn.secondary:hover { background: var(--cardinal-tint); }
+  .btn.ghost { background: transparent; border-color: transparent; color: var(--cool-grey); font-weight: 600; padding-left: 4px; padding-right: 4px; text-decoration: underline; }
+  .btn.small { font-size: 14px; padding: 6px 14px; }
+  .btn:disabled { background: var(--stone-light); border-color: var(--stone-light); color: var(--cool-grey); cursor: not-allowed; }
+  .hint { font-size: 15px; color: var(--cool-grey); }
+
+  textarea, input[type="text"] {
+    width: 100%; font: inherit; font-size: 16px; color: var(--black);
+    border: 1px solid #C4C4C4; border-radius: 8px; padding: 10px 12px; background: var(--white);
+  }
+  textarea { resize: vertical; min-height: 70px; }
+
+  /* Accordion (matches Canvas style) */
+  details.acc { margin: 14px 0; border-radius: 16px; overflow: hidden; background: var(--white); border: 1px solid var(--sky-line); }
+  details.acc > summary { cursor: pointer; padding: 10px 16px; background: var(--sky-tint); color: var(--black); font-weight: 700; font-size: 15px; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+  details.acc > summary::-webkit-details-marker { display: none; }
+  details.acc > summary::after { content: "+"; color: var(--cardinal); font-size: 20px; line-height: 1; }
+  details.acc[open] > summary::after { content: "\2212"; }
+  details.acc .acc-body { padding: 14px 20px; }
+  details.acc ol { margin: 0; padding-left: 22px; }
+
+  /* STEP 1: assignment choices */
+  .samples { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 8px; }
+  .sample {
+    font: inherit; font-size: 15px; line-height: 1.4; text-align: left; color: var(--black); cursor: pointer;
+    background: var(--white); border: 1px solid var(--stone-light); border-radius: 10px; padding: 10px 12px;
+  }
+  .sample:hover { border-color: var(--cardinal-light); background: #FCF7F7; }
+  .own-box { background: #E8F3F9; border: 1px solid var(--sky-line); border-left: 5px solid var(--cardinal); border-radius: 12px; padding: 16px 18px; margin-bottom: 6px; }
+  .own-box textarea { min-height: 84px; }
+  .own-box label { font-weight: 700; display: block; margin-bottom: 6px; }
+  .selected-banner { margin-top: 16px; padding: 12px 16px; border-left: 5px solid var(--cardinal); background: var(--fog); border-radius: 8px; }
+  .selected-banner b { color: var(--cardinal); }
+
+  /* STEP 2: sticky notes */
+  .assign-pill { display: inline-block; background: var(--fog); border-radius: 8px; padding: 8px 14px; margin: 0 0 16px; font-size: 16px; }
+  .assign-pill b { color: var(--cardinal); }
+  .sticky-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; margin: 0 0 16px; }
+  .sticky {
+    position: relative; border-radius: 6px; padding: 10px 10px 8px; min-height: 140px;
+    background: var(--white); border: 1px solid var(--stone-light);
+    box-shadow: 0 2px 4px rgba(46,45,41,.10), 0 6px 12px rgba(46,45,41,.05);
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .sticky .lbl { font-size: 13px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--cool-grey); }
+  .sticky textarea { background: var(--white); border: 1px solid #C4C4C4; min-height: 70px; flex: 1; font-size: 15px; padding: 6px 8px; }
+  .sticky .tools { display: flex; gap: 4px; justify-content: flex-end; }
+  .icon-btn { font: inherit; font-size: 14px; border: 0; background: var(--fog); color: var(--black); width: 30px; height: 28px; border-radius: 6px; cursor: pointer; }
+  .icon-btn:hover { background: var(--white); }
+  .icon-btn:disabled { opacity: .35; cursor: default; }
+  .add-row { display: flex; gap: 10px; align-items: stretch; }
+  .add-row input { flex: 1; }
+
+
+  /* STEP 3: board */
+  .board {
+    position: relative; height: 470px; border-radius: 14px; overflow: hidden; border: 1px solid var(--stone-light);
+    background: var(--white); user-select: none; -webkit-user-select: none;
+  }
+  @media (max-width: 700px) { .board { height: 540px; } }
+  .grey-area {
+    position: absolute; left: 20%; width: 60%; top: 10px; bottom: 6px;
+    background: #EFEFEE; border: 2px dotted #9A9A97; border-radius: 10px; pointer-events: none;
+  }
+  .grey-area span { position: absolute; top: 6px; left: 0; right: 0; text-align: center; font-weight: 700; font-size: 14px; letter-spacing: .06em; text-transform: uppercase; color: var(--cool-grey); }
+  .axis-wrap { position: absolute; left: 0; right: 0; bottom: 0; height: 74px; pointer-events: none; }
+  .axis { position: absolute; left: 14px; right: 14px; top: 0; height: 3px; background: var(--black); border-radius: 2px; }
+  .axis-labels { position: absolute; left: 0; right: 0; top: 10px; display: grid; grid-template-columns: repeat(5, 1fr); text-align: center; }
+  .axis-labels div { font-weight: 700; font-size: 14px; line-height: 1.15; padding: 0 2px; }
+  .axis-labels .dot { display: block; width: 12px; height: 12px; border-radius: 50%; margin: 0 auto 4px; }
+  @media (max-width: 700px) { .axis-labels div { font-size: 11.5px; } }
+  .board.drop-hover { box-shadow: 0 0 0 3px var(--cool-grey) inset; }
+  .board-layer { position: absolute; inset: 0; }
+
+  .tray-wrap { margin-top: 16px; }
+  .tray-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .tray-head strong { font-size: 15px; }
+  .count { font-size: 15px; color: var(--cool-grey); }
+  .tray {
+    display: flex; flex-wrap: wrap; gap: 10px; min-height: calc(var(--card-h) + 24px);
+    padding: 12px; border: 2px dashed var(--stone-light); border-radius: 14px; user-select: none; -webkit-user-select: none;
+  }
+  .tray:empty::after { content: "All steps are on the GrAIdient."; color: var(--black); font-weight: 600; align-self: center; }
+
+  .chip {
+    width: var(--card-w); height: var(--card-h); border-radius: 6px; background: var(--white); border: 1px solid var(--stone-light); padding: 7px 7px 5px; user-select: none; -webkit-user-select: none;
+    box-shadow: 0 1px 2px rgba(46,45,41,.15), 0 3px 8px rgba(46,45,41,.08);
+    cursor: grab; touch-action: none; position: relative; overflow: hidden;
+    font-size: 12.5px; line-height: 1.2; color: var(--black);
+  }
+  .chip .num { display: block; font-weight: 700; font-size: 11px; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 2px; color: var(--cool-grey); }
+  .chip .txt { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  @media (max-width: 700px) { .chip { font-size: 10.5px; padding: 4px 5px; } .chip .num { font-size: 10px; } .chip .txt { -webkit-line-clamp: 4; } }
+  .board .chip { position: absolute; border-top-width: 5px; padding-top: 3px; }
+  .chip.dragging { cursor: grabbing; position: fixed; z-index: 1000; box-shadow: 0 10px 24px rgba(46,45,41,.28); transform: rotate(-2deg); }
+  .chip.has-note::after { content: "\270E"; position: absolute; right: 5px; bottom: 3px; font-size: 12px; color: var(--cool-grey); }
+
+  /* 3b: reasoning */
+  .guide { background: var(--white); border: 1px solid #E4E4E3; border-radius: 10px; padding: 12px 18px; margin: 0 0 20px; }
+  .guide p { margin: 0 0 4px; color: var(--cardinal); font-weight: 700; }
+  .guide ul { margin: 0; padding-left: 20px; }
+  .group { margin-bottom: 18px; }
+  .group-title { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; letter-spacing: .06em; text-transform: uppercase; margin: 0 0 6px; }
+  .group-title .tag { font-size: 11px; background: #EFEFEE; color: var(--cool-grey); padding: 2px 8px; border-radius: 999px; letter-spacing: .04em; }
+  .zdot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; flex: 0 0 auto; }
+  .note-row { padding: 12px 0; border-top: 1px solid #E4E4E3; }
+  .note-row label { font-weight: 700; display: block; margin-bottom: 6px; }
+  .note-row label .num { color: var(--cool-grey); font-weight: 600; }
+  .note-row textarea { min-height: 56px; }
+
+  /* 3b: step picker */
+  .picker { margin: 0 0 20px; }
+  .pick-instr { display: flex; gap: 8px; align-items: baseline; margin: 0 0 12px; padding: 10px 14px; background: var(--sky-tint); border-radius: 10px; font-weight: 700; color: var(--black); }
+  .pick-instr span { color: var(--black); font-size: 18px; }
+  .pick-group { margin-bottom: 14px; }
+  .pick-group h3 { font-size: 15px; margin: 0 0 2px; }
+  .pick-group .sub { font-size: 14px; color: var(--cool-grey); margin: 0 0 8px; }
+  .pick-group.grey { background: #EFEFEE; border: 2px dotted #9A9A97; border-radius: 12px; padding: 12px 14px; }
+  .pick-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pick {
+    font: inherit; font-size: 15px; line-height: 1.3; text-align: left; cursor: pointer; color: var(--black);
+    display: inline-flex; align-items: flex-start; gap: 8px; max-width: 100%;
+    background: var(--white); border: 1px solid #C4C4C4; border-radius: 10px; padding: 8px 12px 8px 10px;
+  }
+  .pick:hover { border-color: var(--black); }
+  .pick .box { flex: 0 0 auto; width: 18px; height: 18px; margin-top: 1px; border: 2px solid #8A8A87; border-radius: 4px; display: grid; place-items: center; font-size: 12px; color: var(--white); }
+  .pick[aria-pressed="true"] { border-color: var(--black); box-shadow: 0 0 0 1px var(--black); background: var(--fog); }
+  .pick[aria-pressed="true"] .box { background: var(--black); border-color: var(--black); }
+  .pick .ztag { display: block; font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; margin-top: 2px; }
+  .note-card { border: 1px solid #E4E4E3; border-left: 4px solid; border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+  .note-card .head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; margin-bottom: 6px; }
+  .note-card label { font-weight: 700; }
+  .note-card .ztag { display: inline-flex; gap: 5px; align-items: center; font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; margin-left: 6px; }
+  .empty-notes { border: 2px dashed var(--stone-light); border-radius: 12px; padding: 16px; color: var(--cool-grey); text-align: center; }
+
+  /* 3c: review */
+  .review-card { border: 1px solid var(--stone-light); border-radius: 14px; padding: 18px 20px; margin-bottom: 18px; }
+  .patterns { background: #E8F3F9; border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; }
+  .patterns ul { margin: 6px 0 0; padding-left: 20px; }
+  .patterns li { margin-bottom: 4px; }
+  .patterns h3 { margin: 0 0 6px; }
+  .patterns p { margin: 0 0 10px; }
+  .patterns p.pq { margin: 0; }
+  .refl { margin-bottom: 16px; }
+  .refl label { font-weight: 700; display: block; margin-bottom: 6px; }
+  .stance { background: var(--cardinal); color: var(--white); border-radius: 14px; padding: 20px 24px; margin: 22px 0 10px; }
+  .stance h2 { color: var(--white); }
+  .stance p { margin: 0 0 12px; }
+  .stance .btns { display: flex; gap: 10px; flex-wrap: wrap; }
+  .stance .btn { background: var(--white); color: var(--cardinal); border-color: var(--white); }
+  .stance .btn:hover { background: var(--cardinal-tint); }
+  .stance .btn.outline { background: transparent; color: var(--white); }
+  .stance .btn.outline:hover { background: rgba(255,255,255,.12); }
+  .copied { font-size: 15px; font-weight: 600; min-height: 1.5em; margin-top: 8px; }
+  #exportText { position: absolute; left: -9999px; top: 0; width: 1px; height: 1px; }
+
+  .refs { font-size: 14px; }
+  .linkbtn { font: inherit; background: none; border: 0; padding: 0; color: var(--cardinal); text-decoration: underline; cursor: pointer; font-weight: 600; }
+  .board.locked .chip { cursor: default; }
+  .refl h3 { margin: 0 0 4px; }
+  .table-wrap { overflow-x: auto; }
+  .grey-table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .grey-table th { text-align: left; background: var(--sky-tint); padding: 8px 10px; font-size: 14px; }
+  .grey-table td { border-top: 1px solid #E4E4E3; padding: 10px; vertical-align: top; }
+  .grey-table td:first-child { width: 38%; }
+  .grey-table .ztag { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; margin-top: 4px; }
+  .grey-table textarea { min-height: 56px; font-size: 15px; }
+  .starters { background: var(--white); border: 1px solid var(--sky-line); border-left: 5px solid var(--cardinal); border-radius: 10px; padding: 12px 18px; margin: 0 0 12px; }
+  .starters p { margin: 0 0 4px; color: var(--cardinal); font-weight: 700; }
+  .starters ul { margin: 0; padding-left: 20px; }
+  .save-note { font-size: 14px; opacity: .9; margin: 10px 0 0 !important; }
+  #copyHtml { position: absolute; left: -9999px; top: 0; width: 600px; }
+  .refs p { margin: 0 0 8px; }
+
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+  [hidden] { display: none !important; }
+
+  /* ===== Embedded in Canvas: the Canvas page already has the banner and module progress bar ===== */
+  html.embedded .app { max-width: none; padding: 2px 2px 24px; }
+  html.embedded .brandbar, html.embedded h1 { display: none; }
+  html.embedded .progress { border: 0; border-bottom: 1px solid #E4E4E3; border-radius: 0; padding: 0 0 12px; margin: 0 0 22px; }
+  html.embedded .progress-head { justify-content: flex-start; margin-bottom: 8px; font-size: 13px; }
+  html.embedded .progress-head strong { color: #585754; font-weight: 600; }
+  html.embedded .progress-head span { display: none; }
+  html.embedded .group3 { display: none; }
+  html.embedded .track { top: 11px; height: 2px; }
+  html.embedded .nodes button { gap: 4px; }
+  html.embedded .node { width: 24px; height: 24px; font-size: 11px; border-width: 2px; }
+  html.embedded .nodes button[aria-current="step"] .node { border-width: 2px; box-shadow: 0 0 0 3px var(--sky-tint); }
+  html.embedded .plabel { font-size: 12px; }
+  /* once Canvas has sized the frame to fit, hide the inner scrollbar entirely */
+  html.embedded.fitted, html.embedded.fitted body { overflow: hidden; }
+
+  @media print {
+    .progress, .actions, .stance .btns, .stance .copied, .brandbar, .tip, #s1, #s2, #s3a, #s3b, .refs, nav, #exportText, #copyHtml { display: none !important; }
+    #step3, #s3c { display: block !important; }
+    .board { break-inside: avoid; }
+    .stance { background: none; color: var(--black); border: 1px solid var(--stone-light); }
+    .stance h2 { color: var(--black); }
+    textarea { border: 1px solid #ccc; overflow: visible; resize: none; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+<script>
+  /* Embedded mode: detect the Canvas iframe before anything renders */
+  if (window.self !== window.top) document.documentElement.classList.add("embedded");
+</script>
+<main class="app">
+  <div class="brandbar" aria-hidden="true"></div>
+  <h1>The GrAIdient</h1>
+
+  <nav class="progress" aria-label="Activity progress">
+    <div class="progress-head"><strong>Your progress</strong><span id="progText"></span></div>
+    <div class="progress-body">
+      <div class="group3" id="group3" aria-hidden="true"><span><b>Step 3: Map &amp; reflect</b></span></div>
+      <div class="track" aria-hidden="true"><div class="fill" id="fill"></div></div>
+      <ol class="nodes" id="stepper">
+        <li><button type="button" data-i="0"><span class="node">1</span><span class="plabel">Identify an assignment</span></button></li>
+        <li><button type="button" data-i="1"><span class="node">2</span><span class="plabel">Break it into steps</span></button></li>
+        <li><button type="button" data-i="2"><span class="node">3a</span><span class="plabel">Place the steps</span></button></li>
+        <li><button type="button" data-i="3"><span class="node">3b</span><span class="plabel">Explain your reasoning</span></button></li>
+        <li><button type="button" data-i="4"><span class="node">3c</span><span class="plabel">Review your stance</span></button></li>
+      </ol>
+    </div>
+  </nav>
+
+  <!-- STEP 1 -->
+  <section id="s1" aria-labelledby="s1Title">
+    <div class="panel-head">
+      <h2 id="s1Title">Step 1: Identify a student assignment</h2>
+      <p>Think of a significant assignment you or a colleague would give in one of your classes. Assignments with several steps work best.</p>
+    </div>
+
+    <div class="own-box">
+      <label for="ownInput">What&rsquo;s the assignment?</label>
+      <textarea id="ownInput" rows="3" placeholder="e.g., Students research a local environmental issue and write a persuasive letter to a city council member."></textarea>
+    </div>
+
+    <details class="acc" id="sampleAcc">
+      <summary>Need an idea? Browse sample assignments</summary>
+      <div class="acc-body">
+        <p class="muted" style="margin:0 0 10px;font-size:15px">Select one to use it. You can edit it to fit your class.</p>
+        <div class="samples" id="choices"></div>
+      </div>
+    </details>
+
+    <div class="actions">
+      <button type="button" class="btn ghost" id="resetBtn">Start over</button>
+      <div class="right">
+        <span class="hint" id="hint1">Describe an assignment to continue.</span>
+        <button type="button" class="btn" id="to2" disabled>Next: Break it into steps</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 2 -->
+  <section id="s2" hidden aria-labelledby="s2Title">
+    <div class="panel-head">
+      <h2 id="s2Title">Step 2: Break the assignment into steps</h2>
+      <p>List each step a student would need to take to complete this assignment, one step per sticky note. Aim for about 5&ndash;10 steps.</p>
+    </div>
+    <div class="assign-pill" id="assignPill2"></div>
+
+    <details class="acc">
+      <summary>Example 1: Create an informational poster about animals that live in the Arctic</summary>
+      <div class="acc-body">
+        <ol>
+          <li>Choose an Arctic animal to research.</li>
+          <li>Find information in books and on websites.</li>
+          <li>Take notes in your own words.</li>
+          <li>Decide which facts are most important to include.</li>
+          <li>Sketch a layout for the poster.</li>
+          <li>Write headings and captions.</li>
+          <li>Draw or find images.</li>
+          <li>Check facts and spelling.</li>
+          <li>Present the poster to the class.</li>
+        </ol>
+      </div>
+    </details>
+    <details class="acc">
+      <summary>Example 2: Write an analytical essay</summary>
+      <div class="acc-body">
+        <ol>
+          <li>Read and annotate the text.</li>
+          <li>Brainstorm possible topics or questions.</li>
+          <li>Write a thesis statement.</li>
+          <li>Gather evidence and quotations that support the thesis.</li>
+          <li>Create an outline.</li>
+          <li>Write a first draft.</li>
+          <li>Get feedback from a peer.</li>
+          <li>Revise for argument and structure.</li>
+          <li>Edit grammar, style, and citations.</li>
+        </ol>
+      </div>
+    </details>
+
+    <div class="sticky-grid" id="stickyGrid" aria-live="polite"></div>
+
+    <div class="add-row">
+      <label for="newStep" class="sr-only">New step</label>
+      <input type="text" id="newStep" placeholder="Type a step and press Enter">
+      <button type="button" class="btn" id="addStep">Add step</button>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="btn secondary" id="back1">Back</button>
+      <div class="right">
+        <span class="hint" id="hint2"></span>
+        <button type="button" class="btn" id="to3" disabled>Next: Map the steps</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 3 -->
+  <section id="step3" hidden aria-labelledby="s3Title">
+    <h2 id="s3Title" class="sr-only">Step 3: Map and reflect</h2>
+
+    <!-- 3a -->
+    <div id="s3a">
+      <div class="panel-head">
+        <h2>Step 3a: Place the steps on the GrAIdient</h2>
+        <p>What if students used AI to help with these steps? For each step, reflect on your own comfort level, then drag its sticky note onto the continuum, from <strong>Totally fine</strong> to <strong>Crosses a line</strong>.</p>
+        <p class="tip">Keyboard: focus a note, press <span class="kbd">1</span>&ndash;<span class="kbd">5</span> to place it, <span class="kbd">&larr;</span> <span class="kbd">&rarr;</span> to fine-tune, <span class="kbd">Delete</span> to return it.</p>
+      </div>
+      <div class="assign-pill" id="assignPill3"></div>
+
+      <div id="boardSlotA"><div class="board" id="board" aria-label="GrAIdient continuum from Totally fine to Crosses a line">
+        <div class="grey-area" aria-hidden="true"><span>Gray area</span></div>
+        <div class="axis-wrap" aria-hidden="true">
+          <div class="axis"></div>
+          <div class="axis-labels">
+            <div style="color:var(--z-fine)"><span class="dot" style="background:var(--z-fine)"></span>Totally fine</div>
+            <div style="color:var(--z-mostly)"><span class="dot" style="background:var(--z-mostly-dot)"></span>Mostly OK</div>
+            <div style="color:var(--z-unsure)"><span class="dot" style="background:var(--z-unsure-dot)"></span>Not really sure</div>
+            <div style="color:var(--z-sketchy)"><span class="dot" style="background:var(--z-sketchy-dot)"></span>Feels sketchy</div>
+            <div style="color:var(--z-line)"><span class="dot" style="background:var(--z-line)"></span>Crosses a line</div>
+          </div>
+        </div>
+        <div class="board-layer" id="boardLayer"></div>
+      </div></div>
+
+      <div class="tray-wrap">
+        <div class="tray-head"><strong>Your steps</strong><span class="count" id="count"></span></div>
+        <div class="tray" id="tray" aria-label="Steps not yet placed"></div>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn secondary" id="back2">Back to steps</button>
+        <div class="right">
+          <span class="hint" id="hint3a"></span>
+          <button type="button" class="btn" id="toB" disabled>Next: Explain your reasoning</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3b -->
+    <div id="s3b" hidden>
+      <div class="panel-head">
+        <h2>Step 3b: Explain your reasoning</h2>
+        <p>Choose a few steps to explain, especially those in the gray area or ones you went back and forth on. Then explain why you placed them where you did.</p>
+      </div>
+      <p class="pick-instr"><span aria-hidden="true">&#9745;</span> Select the steps to add your reasoning. A reasoning box appears below for each step you select.</p>
+      <div class="picker" id="picker"></div>
+      <div class="guide">
+        <p>Questions to guide your notes</p>
+        <ul>
+          <li>Why did you place this step here?</li>
+          <li>What learning goal are you trying to protect?</li>
+          <li>Would AI support the student&rsquo;s thinking here, or replace it?</li>
+          <li>What would make this use acceptable? What would make it cross a line?</li>
+        </ul>
+      </div>
+      <h3 style="margin:0 0 8px">Your reasoning</h3>
+      <div id="notes"></div>
+      <div class="actions">
+        <button type="button" class="btn secondary" id="backA">Back to the GrAIdient</button>
+        <div class="right">
+          <button type="button" class="btn" id="toC">Next: Review your stance</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3c -->
+    <div id="s3c" hidden>
+      <div class="panel-head">
+        <h2>Step 3c: Review your GrAIdient and write your stance</h2>
+        <p>Review the summary of your GrAIdient, then answer the questions below. These are the Touchpoint 1 questions from your playbook.</p>
+      </div>
+      <div class="assign-pill" id="assignPill4"></div>
+      <div id="reviewSlot"></div>
+      <p class="tip" style="margin:8px 0 18px">Want to move a step? <button type="button" class="linkbtn" id="editMap">Go back to Step 3a</button></p>
+
+      <div class="patterns" id="patterns"></div>
+
+      <div class="refl">
+        <h3>Steps in the gray area and your reasoning</h3>
+        <p class="muted" style="margin:0 0 8px;font-size:15px">Your notes from Step 3b appear here. Add to them or edit them.</p>
+        <div class="table-wrap"><table class="grey-table" id="greyTable"></table></div>
+      </div>
+      <div class="refl">
+        <label for="q1">What principles and values guide your decisions?</label>
+        <textarea id="q1" data-refl="values" rows="4"></textarea>
+      </div>
+      <div class="refl">
+        <label for="q2">What could responsible and ethical AI use look like in your subject area, and why?</label>
+        <textarea id="q2" data-refl="ethical" rows="4"></textarea>
+      </div>
+      <div class="starters">
+        <p>Sentence starters for your draft stance</p>
+        <ul>
+          <li>You can use AI to ___, and that&rsquo;s okay because ___.</li>
+          <li>Be cautious about ___.</li>
+          <li>Don&rsquo;t let it ___.</li>
+        </ul>
+      </div>
+      <div class="refl">
+        <label for="q3">Bring together your answers to the questions above, and write your initial stance on AI in education.</label>
+        <textarea id="q3" data-refl="stance" rows="5"></textarea>
+      </div>
+
+      <div class="stance">
+        <h2>Add this to your playbook</h2>
+        <p>Download a Word document with your GrAIdient and responses, or copy them, and add them to <strong>Touchpoint 1</strong> of your playbook.</p>
+        <div class="btns">
+          <button type="button" class="btn" id="docxBtn">Download as Word document</button>
+          <button type="button" class="btn outline" id="copyBtn">Copy my responses</button>
+        </div>
+        <div class="copied" id="copied" aria-live="polite"></div>
+        <p class="save-note">Your work is saved only in this browser. Copy it into your playbook so you have it for Touchpoint 3 and the Capstone.</p>
+      </div>
+
+      <details class="acc refs">
+        <summary>References</summary>
+        <div class="acc-body">
+          <p>The GrAIdient activity is developed by the Center for Digital Thriving at Harvard Graduate School of Education.</p>
+          <p>Tench, B. &amp; Weinstein, E. (2025). <em><a href="https://www.graidients.ai/about/" target="_blank" rel="noopener" style="color:var(--cardinal)">Graidients 1.0: A framework for making the ethically gray areas of Generative AI visible</a>.</em> Cambridge, MA, USA: Center for Digital Thriving.</p>
+        </div>
+      </details>
+
+      <div class="actions">
+        <button type="button" class="btn secondary" id="backB">Back to reasoning</button>
+        <div class="right">
+          <button type="button" class="btn ghost" id="restart">Start a new assignment</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <textarea id="exportText" aria-hidden="true" tabindex="-1"></textarea>
+  <div id="copyHtml" aria-hidden="true"></div>
+  <div class="sr-only" aria-live="polite" id="live"></div>
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ------------------------------------------------------------------
+     CONTENT: edit the assignment scenarios here.
+  ------------------------------------------------------------------ */
+  var SCENARIOS = [
+    "Write a 5-page essay analyzing the theme of power and corruption in Macbeth.",
+    "Compare and contrast two major causes of the fall of the Roman Empire using primary and secondary sources.",
+    "Write a poem about something you observe in nature, using at least two types of figurative language, and then illustrate the poem.",
+    "A culminating garden project: students plant seeds, observe growth, keep a journal with drawings and observations, and present what they learned about plants.",
+    "Write a lab report based on your experiment testing the effect of sunlight on plant growth.",
+    "Conduct a small-scale survey about student sleep habits and write up your results.",
+    "Write a script that centers on a conflict between two characters.",
+    "Complete a set of math problems and include a written explanation of your process.",
+    "Write an artist statement explaining the concept, process, and intention behind your final portfolio piece.",
+    "Create a portfolio of digital projects.",
+    "A culminating research project that applies a variety of subject-specific skills."
+  ];
+
+  var ZONES = [
+    { id: "fine",    label: "Totally fine",    text: "var(--z-fine)",    dot: "#175E54" },
+    { id: "mostly",  label: "Mostly OK",       text: "var(--z-mostly)",  dot: "#8F993E" },
+    { id: "unsure",  label: "Not really sure", text: "var(--z-unsure)",  dot: "#ABABA9" },
+    { id: "sketchy", label: "Feels sketchy",   text: "var(--z-sketchy)", dot: "#E98300" },
+    { id: "line",    label: "Crosses a line",  text: "var(--z-line)",    dot: "#8C1515" }
+  ];
+  var GREY = { mostly: 1, unsure: 1, sketchy: 1 };
+  var MIN_STEPS = 3;
+  var STORE_KEY = "ail-graidient-v1";
+
+  /* ---------------- state ---------------- */
+  function fresh() { return { preset: null, own: "", steps: [], pos: {}, why: {}, refl: { values: "", ethical: "", stance: "" }, chosen: {}, step: 1, sub: "a", maxStep: 1, maxSub: "a", seq: 0 }; }
+  function load() { try { var s = JSON.parse(localStorage.getItem(STORE_KEY)); return s && s.steps ? s : null; } catch (e) { return null; } }
+  function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {} }
+  var state = load() || fresh();
+
+  var $ = function (id) { return document.getElementById(id); };
+  var live = $("live");
+  function announce(m) { live.textContent = ""; setTimeout(function () { live.textContent = m; }, 30); }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  function zoneIdx(x) { return clamp(Math.floor(x * 5), 0, 4); }
+  function assignment() { return state.own.trim() || (state.preset != null ? SCENARIOS[state.preset] : ""); }
+  function stepNum(id) { for (var i = 0; i < state.steps.length; i++) if (state.steps[i].id === id) return i + 1; return 0; }
+  function stepById(id) { for (var i = 0; i < state.steps.length; i++) if (state.steps[i].id === id) return state.steps[i]; return null; }
+  function cleanSteps() { return state.steps.filter(function (s) { return s.text.trim(); }); }
+
+  /* ================= STEP 1 ================= */
+  // older saved progress may have used a list choice
+  if (state.preset != null && !state.own.trim()) { state.own = SCENARIOS[state.preset] || ""; }
+  state.preset = null;
+
+  function buildChoices() {
+    $("choices").innerHTML = SCENARIOS.map(function (s, i) {
+      return '<button type="button" class="sample" data-i="' + i + '">' + esc(s) + "</button>";
+    }).join("");
+    $("ownInput").value = state.own;
+  }
+  $("choices").addEventListener("click", function (e) {
+    var b = e.target.closest(".sample"); if (!b) return;
+    state.own = SCENARIOS[+b.dataset.i];
+    $("ownInput").value = state.own;
+    $("sampleAcc").open = false;
+    save(); render();
+    $("ownInput").focus();
+    announce("Sample assignment added. You can edit it.");
+  });
+  $("ownInput").addEventListener("input", function (e) { state.own = e.target.value; save(); render(); });
+
+  /* ================= STEP 2 ================= */
+  function addStep(text) {
+    state.seq = (state.seq || 0) + 1;
+    state.steps.push({ id: "s" + state.seq, text: text || "" });
+    save();
+  }
+  function buildStickies(focusId) {
+    var html = "";
+    state.steps.forEach(function (s, i) {
+      html += '<div class="sticky" data-id="' + s.id + '">' +
+        '<span class="lbl">Step ' + (i + 1) + "</span>" +
+        '<label class="sr-only" for="st-' + s.id + '">Step ' + (i + 1) + "</label>" +
+        '<textarea id="st-' + s.id + '" data-step="' + s.id + '" rows="3">' + esc(s.text) + "</textarea>" +
+        '<div class="tools">' +
+        '<button type="button" class="icon-btn" data-act="up" aria-label="Move step ' + (i + 1) + ' earlier"' + (i === 0 ? " disabled" : "") + ">&uarr;</button>" +
+        '<button type="button" class="icon-btn" data-act="down" aria-label="Move step ' + (i + 1) + ' later"' + (i === state.steps.length - 1 ? " disabled" : "") + ">&darr;</button>" +
+        '<button type="button" class="icon-btn" data-act="del" aria-label="Delete step ' + (i + 1) + '">&times;</button>' +
+        "</div></div>";
+    });
+    $("stickyGrid").innerHTML = html;
+    if (focusId) { var t = $("st-" + focusId); if (t) t.focus(); }
+  }
+  $("stickyGrid").addEventListener("input", function (e) {
+    var id = e.target.dataset.step; if (!id) return;
+    stepById(id).text = e.target.value; save(); render();
+  });
+  $("stickyGrid").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-act]"); if (!b) return;
+    var id = b.closest(".sticky").dataset.id, i = state.steps.indexOf(stepById(id));
+    if (b.dataset.act === "del") {
+      state.steps.splice(i, 1); delete state.pos[id]; delete state.why[id];
+      if (chips[id]) { chips[id].remove(); delete chips[id]; }
+      announce("Step deleted.");
+    } else {
+      var j = b.dataset.act === "up" ? i - 1 : i + 1;
+      var tmp = state.steps[i]; state.steps[i] = state.steps[j]; state.steps[j] = tmp;
+      announce("Step moved to position " + (j + 1) + ".");
+    }
+    save(); buildStickies(); render();
+    var again = $("stickyGrid").querySelector('[data-id="' + id + '"] button[data-act="' + b.dataset.act + '"]');
+    if (again && !again.disabled) again.focus();
+  });
+  function submitNew() {
+    var inp = $("newStep"), v = inp.value.trim();
+    if (!v) { inp.focus(); return; }
+    addStep(v); inp.value = ""; buildStickies(); render(); inp.focus();
+    announce("Step " + state.steps.length + " added.");
+  }
+  $("addStep").addEventListener("click", submitNew);
+  $("newStep").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); submitNew(); } });
+
+  /* ================= STEP 3a: board ================= */
+  var board = $("board"), layer = $("boardLayer"), tray = $("tray");
+  var chips = {};
+  var AXIS_H = 78, TOP_PAD = 36;
+
+  function chipFor(s) {
+    var el = chips[s.id];
+    if (!el) {
+      el = document.createElement("div");
+      el.className = "chip";
+      el.tabIndex = 0;
+      el.setAttribute("role", "button");
+      el.dataset.id = s.id;
+      el.innerHTML = '<span class="num"></span><span class="txt"></span>';
+      el.addEventListener("pointerdown", onDown);
+      el.addEventListener("keydown", onKey);
+      chips[s.id] = el;
+    }
+    return el;
+  }
+  function cardDims() {
+    var cs = getComputedStyle(document.documentElement);
+    return { w: parseFloat(cs.getPropertyValue("--card-w")) || 132, h: parseFloat(cs.getPropertyValue("--card-h")) || 78 };
+  }
+  function renderBoard() {
+    var W = layer.clientWidth, H = layer.clientHeight, c = cardDims(), placed = 0;
+    var steps = cleanSteps();
+    Object.keys(chips).forEach(function (id) { if (!stepById(id) || !stepById(id).text.trim()) { chips[id].remove(); delete chips[id]; } });
+    steps.forEach(function (s) {
+      var el = chipFor(s), p = state.pos[s.id], n = stepNum(s.id);
+      el.className = "chip" + (state.why[s.id] && state.why[s.id].trim() ? " has-note" : "");
+      el.style.borderTopColor = p ? ZONES[zoneIdx(p.x)].dot : "";
+      el.querySelector(".num").textContent = "Step " + n;
+      el.querySelector(".txt").textContent = s.text;
+      var w = (state.why[s.id] || "").trim();
+      el.title = "Step " + n + ": " + s.text + (w ? "\nReasoning: " + w : "");
+      if (p) {
+        placed++;
+        if (el.parentNode !== layer) layer.appendChild(el);
+        el.style.left = clamp(p.x * W - c.w / 2, 2, W - c.w - 2) + "px";
+        el.style.top = clamp(p.y * H - c.h / 2, TOP_PAD, H - AXIS_H - c.h - 4) + "px";
+      } else {
+        el.style.left = el.style.top = "";
+        if (el.parentNode !== tray) tray.appendChild(el);
+      }
+      el.setAttribute("aria-label", "Step " + n + ": " + s.text + ". " + (p ? ZONES[zoneIdx(p.x)].label : "Not placed yet"));
+    });
+    // keep tray in step order
+    steps.forEach(function (s) { if (!state.pos[s.id]) tray.appendChild(chips[s.id]); });
+    $("count").textContent = placed + " of " + steps.length + " placed";
+    $("toB").disabled = placed < steps.length;
+    $("hint3a").textContent = placed < steps.length ? "Place every step to continue." : "";
+  }
+
+  var drag = null;
+  function onDown(e) {
+    if (e.button > 0 || state.sub === "c") return;
+    var el = e.currentTarget, r = el.getBoundingClientRect();
+    drag = { el: el, id: el.dataset.id, pid: e.pointerId, sx: e.clientX, sy: e.clientY, ox: e.clientX - r.left, oy: e.clientY - r.top, w: r.width, h: r.height, moved: false };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+    e.preventDefault();
+  }
+  function onMove(e) {
+    if (!drag || e.pointerId !== drag.pid) return;
+    e.preventDefault();
+    if (!drag.moved && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 4) return;
+    if (!drag.moved) { drag.moved = true; drag.el.classList.add("dragging"); document.body.appendChild(drag.el); }
+    if (e.clientY < 50) window.scrollBy(0, -14); else if (e.clientY > window.innerHeight - 50) window.scrollBy(0, 14);
+    drag.el.style.left = (e.clientX - drag.ox) + "px";
+    drag.el.style.top = (e.clientY - drag.oy) + "px";
+    board.classList.toggle("drop-hover", overBoard(e.clientX, e.clientY));
+  }
+  function onUp(e) {
+    if (!drag || e.pointerId !== drag.pid) return;
+    window.removeEventListener("pointermove", onMove);
+    window.removeEventListener("pointerup", onUp);
+    window.removeEventListener("pointercancel", onUp);
+    board.classList.remove("drop-hover");
+    var el = drag.el;
+    if (drag.moved) {
+      el.classList.remove("dragging");
+      var cx = e.clientX - drag.ox + drag.w / 2, cy = e.clientY - drag.oy + drag.h / 2;
+      if (overBoard(e.clientX, e.clientY)) {
+        var r = layer.getBoundingClientRect();
+        state.pos[drag.id] = { x: clamp((cx - r.left) / r.width, 0, 1), y: clamp((cy - r.top) / r.height, 0, 1) };
+        announce("Step " + stepNum(drag.id) + " placed at " + ZONES[zoneIdx(state.pos[drag.id].x)].label + ".");
+      } else {
+        delete state.pos[drag.id];
+        announce("Step " + stepNum(drag.id) + " returned to your steps.");
+      }
+      el.style.left = el.style.top = "";
+      save(); renderBoard();
+    }
+    el.focus({ preventScroll: true });
+    drag = null;
+  }
+  function overBoard(x, y) { var r = board.getBoundingClientRect(); return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom; }
+
+  var kbCount = [0, 0, 0, 0, 0];
+  function onKey(e) {
+    if (state.sub === "c") return;
+    var id = e.currentTarget.dataset.id, p = state.pos[id], k = e.key, handled = true;
+    if (/^[1-5]$/.test(k)) {
+      var z = +k - 1, n = kbCount[z]++ % 6;
+      state.pos[id] = { x: (z + 0.5) / 5, y: 0.18 + n * 0.11 };
+    } else if ((k === "ArrowLeft" || k === "ArrowRight") && p) {
+      p.x = clamp(p.x + (k === "ArrowLeft" ? -0.025 : 0.025), 0, 1);
+    } else if ((k === "ArrowUp" || k === "ArrowDown") && p) {
+      p.y = clamp(p.y + (k === "ArrowUp" ? -0.05 : 0.05), 0, 1);
+    } else if ((k === "Delete" || k === "Backspace") && p) {
+      delete state.pos[id];
+    } else handled = false;
+    if (!handled) return;
+    e.preventDefault();
+    save(); renderBoard(); chips[id].focus();
+    announce("Step " + stepNum(id) + ": " + (state.pos[id] ? ZONES[zoneIdx(state.pos[id].x)].label : "returned to your steps") + ".");
+  }
+
+  /* ================= STEP 3b ================= */
+  function grouped() {
+    var g = ZONES.map(function () { return []; });
+    cleanSteps().forEach(function (s) { var p = state.pos[s.id]; if (p) g[zoneIdx(p.x)].push(s); });
+    g.forEach(function (list) { list.sort(function (a, b) { return state.pos[a.id].x - state.pos[b.id].x; }); });
+    return g;
+  }
+  function pickBtn(s) {
+    var z = ZONES[zoneIdx(state.pos[s.id].x)], on = !!state.chosen[s.id];
+    return '<button type="button" class="pick" data-pick="' + s.id + '" aria-pressed="' + on + '"><span class="box" aria-hidden="true">' + (on ? "✓" : "") + "</span>" +
+      "<span><b>Step " + stepNum(s.id) + ":</b> " + esc(s.text) +
+      '<span class="ztag" style="color:' + z.text + '">' + z.label + "</span></span></button>";
+  }
+  function buildPicker() {
+    var g = grouped(), grey = g[1].concat(g[2], g[3]), ends = g[0].concat(g[4]);
+    var html = '<div class="pick-group grey"><h3>Steps in the gray area (' + grey.length + ")</h3>" +
+      '<p class="sub">' + (grey.length ? "These are usually the most worth explaining." : "You didn&rsquo;t place any steps in the gray area.") + "</p>" +
+      '<div class="pick-list">' + grey.map(pickBtn).join("") + "</div></div>";
+    if (ends.length) {
+      html += '<div class="pick-group"><h3>Steps you placed at Totally fine or Crosses a line (' + ends.length + ")</h3>" +
+                '<div class="pick-list">' + ends.map(pickBtn).join("") + "</div></div>";
+    }
+    $("picker").innerHTML = html;
+  }
+  function buildNoteCards() {
+    var chosen = cleanSteps().filter(function (s) { return state.chosen[s.id] && state.pos[s.id]; });
+    if (!chosen.length) { $("notes").innerHTML = '<div class="empty-notes">Choose one or more steps above to explain your reasoning.</div>'; return; }
+    $("notes").innerHTML = chosen.map(function (s) {
+      var z = ZONES[zoneIdx(state.pos[s.id].x)], grey = GREY[z.id];
+      return '<div class="note-card" style="border-left-color:' + z.dot + '"><div class="head"><div><label for="why-' + s.id + '">Step ' + stepNum(s.id) + ": " + esc(s.text) + "</label>" +
+        '<span class="ztag" style="color:' + z.text + '"><span class="zdot" style="background:' + z.dot + '"></span>' + z.label + "</span></div>" +
+        '<button type="button" class="linkbtn" data-unpick="' + s.id + '" style="font-size:14px;white-space:nowrap">Remove</button></div>' +
+        '<textarea id="why-' + s.id + '" data-why="' + s.id + '" rows="2" placeholder="' + (grey ? "Why is this one in the gray area for you?" : "Why did you place it here?") + '">' + esc(state.why[s.id] || "") + "</textarea></div>";
+    }).join("");
+  }
+  function buildNotes() {
+    if (!state.chosen) state.chosen = {};
+    Object.keys(state.why).forEach(function (id) { if ((state.why[id] || "").trim()) state.chosen[id] = true; });
+    buildPicker(); buildNoteCards();
+  }
+  $("picker").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-pick]"); if (!b) return;
+    var id = b.dataset.pick;
+    state.chosen[id] = !state.chosen[id];
+    save(); buildPicker(); buildNoteCards();
+    var again = $("picker").querySelector('[data-pick="' + id + '"]'); if (again) again.focus();
+    if (state.chosen[id]) announce("Step " + stepNum(id) + " added. A reasoning box is below.");
+  });
+  $("notes").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-unpick]"); if (!b) return;
+    var id = b.dataset.unpick;
+    state.chosen[id] = false; state.why[id] = "";
+    save(); buildPicker(); buildNoteCards();
+    announce("Step " + stepNum(id) + " removed.");
+  });
+  $("notes").addEventListener("input", function (e) { var id = e.target.dataset.why; if (!id) return; state.why[id] = e.target.value; save(); });
+
+  /* ================= STEP 3c ================= */
+  function greySteps() {
+    var g = grouped();
+    return g[1].concat(g[2], g[3]).sort(function (a, b) { return state.pos[a.id].x - state.pos[b.id].x; });
+  }
+  function buildReview() {
+    var g = grouped(), total = cleanSteps().length;
+
+    // patterns (observations + prompts, no judgments)
+    var greyN = g[1].length + g[2].length + g[3].length;
+    var first = cleanSteps().slice(0, Math.ceil(total / 2)).map(function (s) { return zoneIdx(state.pos[s.id].x); });
+    var last = cleanSteps().slice(Math.ceil(total / 2)).map(function (s) { return zoneIdx(state.pos[s.id].x); });
+    var avg = function (a) { return a.length ? a.reduce(function (x, y) { return x + y; }, 0) / a.length : 0; };
+    // --- adaptive summary: grammar adjusts to what the learner placed ---
+    function andList(a) { return a.length < 2 ? (a[0] || "") : a.length === 2 ? a[0] + " and " + a[1] : a.slice(0, -1).join(", ") + ", and " + a[a.length - 1]; }
+    function stepRef(list) {
+      if (list.length === 1) return named(list[0]);
+      var nums = list.map(function (s) { return stepNum(s.id); }).sort(function (a, b) { return a - b; });
+      return (nums.length === 1 ? "Step " : "Steps ") + andList(nums.map(String));
+    }
+    function short(t) { t = String(t).trim(); return t.length > 48 ? t.slice(0, 45).replace(/\s+\S*$/, "") + "…" : t; }
+    function named(s) { return "Step " + stepNum(s.id) + " (“" + esc(short(s.text)) + "”)"; }
+
+    var placed = cleanSteps().filter(function (s) { return state.pos[s.id]; })
+      .sort(function (a, b) { return state.pos[a.id].x - state.pos[b.id].x; });
+    var sum = [], qs = [];
+
+    // 1. Where the steps landed
+    var parts = [];
+    if (g[0].length) parts.push(g[0].length + " at <strong>Totally fine</strong>");
+    if (greyN) parts.push(greyN + " in the gray area");
+    if (g[4].length) parts.push(g[4].length + " at <strong>Crosses a line</strong>");
+    sum.push("Of your " + total + " steps, you placed " + andList(parts) + ".");
+
+    // 2. Overall shape
+    var shift = total >= 4 ? avg(last) - avg(first) : 0;
+    if (shift >= 1) sum.push("Your comfort with AI drops as the assignment goes on: later steps sit closer to <strong>Crosses a line</strong> than earlier ones.");
+    else if (shift <= -1) sum.push("Your comfort with AI rises as the assignment goes on: later steps sit closer to <strong>Totally fine</strong> than earlier ones.");
+    else if (greyN / total >= 0.6) sum.push("Most of your steps are in the gray area, so your comfort likely depends on <em>how</em> AI is used, not just whether it is used.");
+    else if (!greyN) sum.push("You saw every step as clear-cut, either fine or off-limits.");
+
+    // 3. Most and least comfortable steps
+    if ((!g[0].length || !g[4].length) && placed.length >= 2 && state.pos[placed[placed.length - 1].id].x - state.pos[placed[0].id].x >= 0.2) {
+      sum.push("You were most comfortable with AI for " + named(placed[0]) + " and least comfortable for " + named(placed[placed.length - 1]) + ".");
+    }
+
+    // Questions (only the ones that apply)
+    if (g[0].length) qs.push("What makes " + stepRef(g[0]) + " feel fine to do with AI?");
+    if (g[4].length) qs.push((g[4].length === 1 ? "Is " : "Are ") + stepRef(g[4]) + " where the core learning happens?");
+    if (greyN) qs.push("For " + (greyN === 1 ? "the step" : "the steps") + " in the gray area, what would make AI use feel more acceptable, or less?");
+    else qs.push("Is anything about these steps really that clear-cut?");
+    if (shift >= 1 || shift <= -1) qs.push("Why might your comfort change from the beginning of the assignment to the end?");
+
+    var p = "<h3>Your GrAIdient at a glance</h3><p>" + sum.join(" ") + "</p>";
+    p += '<p class="pq"><strong>Questions to consider</strong></p><ul>' + qs.slice(0, 3).map(function (q) { return "<li>" + q + "</li>"; }).join("") + "</ul>";
+    $("patterns").innerHTML = p;
+
+    // gray-area table (mirrors playbook)
+    var rows = '<thead><tr><th scope="col">Step</th><th scope="col">Why I think it&rsquo;s in the gray area</th></tr></thead><tbody>';
+    var gs = greySteps();
+    if (!gs.length) rows += '<tr><td colspan="2" class="muted">You didn&rsquo;t place any steps in the gray area.</td></tr>';
+    gs.forEach(function (s) {
+      var z = ZONES[zoneIdx(state.pos[s.id].x)];
+      rows += "<tr><td><label for=\"gw-" + s.id + "\"><b>Step " + stepNum(s.id) + ":</b> " + esc(s.text) + "</label><br>" +
+        '<span class="ztag" style="color:' + z.text + '"><span class="zdot" style="background:' + z.dot + '"></span>' + z.label + "</span></td>" +
+        '<td><textarea id="gw-' + s.id + '" data-gwhy="' + s.id + '" rows="2">' + esc(state.why[s.id] || "") + "</textarea></td></tr>";
+    });
+    $("greyTable").innerHTML = rows + "</tbody>";
+
+    $("assignPill4").innerHTML = "<b>Assignment:</b> " + esc(assignment());
+    $("q1").value = state.refl.values || "";
+    $("q2").value = state.refl.ethical || "";
+    $("q3").value = state.refl.stance || "";
+  }
+  $("greyTable").addEventListener("input", function (e) {
+    var id = e.target.dataset.gwhy; if (!id) return;
+    state.why[id] = e.target.value; save(); renderBoard();
+  });
+  document.querySelectorAll("[data-refl]").forEach(function (t) {
+    t.addEventListener("input", function () { state.refl[t.dataset.refl] = t.value; save(); });
+  });
+  $("editMap").addEventListener("click", function () { go(3, "a"); });
+
+  /* ---------- export ---------- */
+  var Q = {
+    grey: "Steps in the gray area and your reasoning",
+    values: "What principles and values guide your decisions?",
+    ethical: "What could responsible and ethical AI use look like in your subject area, and why?",
+    stance: "My initial stance on AI in education"
+  };
+  function ans(k) { return (state.refl[k] || "").trim(); }
+  function exportText() {
+    var g = grouped(), out = [];
+    out.push("TOUCHPOINT 1: MY GrAIdient AND INITIAL STANCE");
+    out.push("");
+    out.push("Assignment: " + assignment());
+    out.push("");
+    out.push("My GrAIdient:");
+    ZONES.forEach(function (z, i) {
+      out.push("  " + z.label + (GREY[z.id] ? " (gray area)" : "") + ": " + (g[i].length ? g[i].map(function (s) { return "Step " + stepNum(s.id) + " – " + s.text; }).join("; ") : "none"));
+    });
+    out.push("");
+    out.push(Q.grey);
+    greySteps().forEach(function (s) {
+      out.push("  - Step " + stepNum(s.id) + ": " + s.text);
+      out.push("    Why: " + ((state.why[s.id] || "").trim() || "(no reasoning yet)"));
+    });
+    if (!greySteps().length) out.push("  (none)");
+    ["values", "ethical", "stance"].forEach(function (k) { out.push(""); out.push(Q[k]); out.push(ans(k) || "(not answered yet)"); });
+    return out.join("\n");
+  }
+  function exportHTML() {
+    var g = grouped(), td = 'style="border:1px solid #999;padding:6px;vertical-align:top"', th = 'style="border:1px solid #999;padding:6px;background:#B9DEEF;text-align:left"';
+    var para = function (t) { return t ? esc(t).replace(/\n/g, "<br>") : "<i>(not answered yet)</i>"; };
+    var h = "<p><b>Assignment:</b> " + esc(assignment()) + "</p>";
+    h += "<p><b>My GrAIdient</b></p><table style=\"border-collapse:collapse;width:100%\"><tr><th " + th + ">Where I placed it</th><th " + th + ">Steps</th></tr>";
+    ZONES.forEach(function (z, i) {
+      h += "<tr><td " + td + "><b>" + z.label + "</b>" + (GREY[z.id] ? " (gray area)" : "") + "</td><td " + td + ">" +
+        (g[i].length ? g[i].map(function (s) { return "Step " + stepNum(s.id) + ": " + esc(s.text); }).join("<br>") : "—") + "</td></tr>";
+    });
+    h += "</table><p><b>" + Q.grey + "</b></p><table style=\"border-collapse:collapse;width:100%\"><tr><th " + th + ">Step</th><th " + th + ">Why I think it’s in the gray area</th></tr>";
+    var gs = greySteps();
+    if (!gs.length) h += "<tr><td " + td + " colspan=\"2\">(none)</td></tr>";
+    gs.forEach(function (s) { h += "<tr><td " + td + ">Step " + stepNum(s.id) + ": " + esc(s.text) + "</td><td " + td + ">" + para((state.why[s.id] || "").trim()) + "</td></tr>"; });
+    h += "</table>";
+    ["values", "ethical", "stance"].forEach(function (k) { h += "<p><b>" + Q[k] + "</b></p><p>" + para(ans(k)) + "</p>"; });
+    return h;
+  }
+  function copied(ok) { $("copied").textContent = ok ? "Copied. Paste it into Touchpoint 1 of your playbook." : "Copy was blocked here. Use Download as Word document instead."; }
+  $("copyBtn").addEventListener("click", function () {
+    var html = exportHTML(), txt = exportText();
+    function fallback() {
+      var box = $("copyHtml"); box.innerHTML = html;
+      var range = document.createRange(); range.selectNodeContents(box);
+      var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+      var ok = false; try { ok = document.execCommand("copy"); } catch (e) {}
+      sel.removeAllRanges(); box.innerHTML = "";
+      if (!ok) { var ta = $("exportText"); ta.value = txt; ta.select(); try { ok = document.execCommand("copy"); } catch (e) {} }
+      copied(ok);
+    }
+    try {
+      if (navigator.clipboard && window.ClipboardItem) {
+        navigator.clipboard.write([new ClipboardItem({
+          "text/html": new Blob([html], { type: "text/html" }),
+          "text/plain": new Blob([txt], { type: "text/plain" })
+        })]).then(function () { copied(true); }, fallback);
+      } else fallback();
+    } catch (e) { fallback(); }
+  });
+
+  /* ---------- GrAIdient image (drawn from the live board) ---------- */
+  function wrap(ctx, text, maxW, maxLines) {
+    var words = String(text).split(/\s+/), lines = [], line = "";
+    words.forEach(function (w) {
+      var t = line ? line + " " + w : w;
+      if (ctx.measureText(t).width <= maxW || !line) line = t; else { lines.push(line); line = w; }
+    });
+    if (line) lines.push(line);
+    if (lines.length > maxLines) {
+      lines = lines.slice(0, maxLines);
+      var l = lines[maxLines - 1];
+      while (l && ctx.measureText(l + "…").width > maxW) l = l.slice(0, -1);
+      lines[maxLines - 1] = l + "…";
+    }
+    return lines;
+  }
+  function rrect(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+  function drawMap() {
+    var bw = Math.max(layer.clientWidth, 720), scaleX = bw / (layer.clientWidth || bw);
+    var bh = Math.round((layer.clientHeight || 470) * (layer.clientWidth ? 1 : 1));
+    if (layer.clientWidth < 720) bh = Math.round(bh * scaleX * 0.62); // phones: flatten the tall board
+    var scaleY = bh / (layer.clientHeight || bh);
+    var pad = 24, SANS = '"Source Sans 3", "Helvetica Neue", Arial, sans-serif', SERIF = '"Source Serif 4", Georgia, serif';
+    var probe = document.createElement("canvas").getContext("2d");
+    probe.font = "16px " + SANS;
+    var aLines = wrap(probe, "Assignment: " + assignment(), bw - 8, 3);
+    var headH = 44 + aLines.length * 22 + 14;
+    var W = bw + pad * 2, H = headH + bh + pad * 2, k = 2;
+    var cv = document.createElement("canvas"); cv.width = W * k; cv.height = H * k;
+    var ctx = cv.getContext("2d"); ctx.scale(k, k);
+    ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = "#8C1515"; ctx.fillRect(pad, pad - 10, bw, 4);
+    ctx.fillStyle = "#2E2D29"; ctx.font = "700 24px " + SERIF; ctx.textBaseline = "top";
+    ctx.fillText("My GrAIdient", pad, pad + 4);
+    ctx.font = "16px " + SANS; ctx.fillStyle = "#53565A";
+    aLines.forEach(function (l, i) { ctx.fillText(l, pad, pad + 40 + i * 22); });
+    var ox = pad, oy = pad + headH;
+    // board frame
+    ctx.strokeStyle = "#DAD7CB"; ctx.lineWidth = 1; rrect(ctx, ox, oy, bw, bh, 14); ctx.stroke();
+    // gray area
+    ctx.fillStyle = "#EFEFEE"; rrect(ctx, ox + bw * 0.2, oy + 10, bw * 0.6, bh - 16, 10); ctx.fill();
+    ctx.setLineDash([3, 4]); ctx.strokeStyle = "#9A9A97"; ctx.lineWidth = 2; ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = "#53565A"; ctx.font = "700 14px " + SANS; ctx.textAlign = "center";
+    ctx.fillText("GRAY AREA", ox + bw / 2, oy + 18);
+    // axis
+    var ay = oy + bh - 74;
+    ctx.fillStyle = "#2E2D29"; ctx.fillRect(ox + 14, ay, bw - 28, 3);
+    var zoneText = ["#175E54", "#5E6627", "#585754", "#A34D0A", "#8C1515"];
+    ZONES.forEach(function (z, i) {
+      var cx = ox + bw * (i + 0.5) / 5;
+      ctx.fillStyle = z.dot; ctx.beginPath(); ctx.arc(cx, ay + 16, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = zoneText[i]; ctx.font = "700 14px " + SANS;
+      wrap(ctx, z.label, bw / 5 - 6, 2).forEach(function (l, j) { ctx.fillText(l, cx, ay + 28 + j * 16); });
+    });
+    ctx.textAlign = "left";
+    // chips, at the same positions as on screen
+    var c = { w: chips[cleanSteps()[0].id].offsetWidth, h: chips[cleanSteps()[0].id].offsetHeight };
+    var cw = Math.max(c.w, 120), ch = Math.max(c.h, 74);
+    cleanSteps().forEach(function (s) {
+      var el = chips[s.id]; if (!el || !state.pos[s.id]) return;
+      var cxp = (el.offsetLeft + c.w / 2) * scaleX, cyp = (el.offsetTop + c.h / 2) * scaleY;
+      var x = Math.max(4, Math.min(bw - cw - 4, cxp - cw / 2)) + ox, y = Math.max(30, Math.min(bh - 78 - ch, cyp - ch / 2)) + oy;
+      var zc = ZONES[zoneIdx(state.pos[s.id].x)].dot;
+      ctx.save(); ctx.shadowColor = "rgba(46,45,41,.18)"; ctx.shadowBlur = 6; ctx.shadowOffsetY = 2;
+      ctx.fillStyle = "#FFFFFF"; rrect(ctx, x, y, cw, ch, 6); ctx.fill(); ctx.restore();
+      ctx.strokeStyle = "#DAD7CB"; ctx.lineWidth = 1; rrect(ctx, x, y, cw, ch, 6); ctx.stroke();
+      ctx.save(); rrect(ctx, x, y, cw, ch, 6); ctx.clip(); ctx.fillStyle = zc; ctx.fillRect(x, y, cw, 5); ctx.restore();
+      ctx.fillStyle = "#53565A"; ctx.font = "700 11px " + SANS; ctx.fillText("STEP " + stepNum(s.id), x + 7, y + 10);
+      ctx.fillStyle = "#2E2D29"; ctx.font = "12.5px " + SANS;
+      wrap(ctx, s.text, cw - 14, 3).forEach(function (l, j) { ctx.fillText(l, x + 7, y + 26 + j * 15); });
+    });
+    return cv;
+  }
+
+  /* ---------- Word document (.docx), built in the browser ---------- */
+  var CRC_T = (function () { var t = [], c, n, k; for (n = 0; n < 256; n++) { c = n; for (k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  function crc32(u8) { var c = 0xFFFFFFFF; for (var i = 0; i < u8.length; i++) c = CRC_T[(c ^ u8[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+  function makeZip(files) {
+    var enc = new TextEncoder(), locals = [], centrals = [], offset = 0;
+    files.forEach(function (f) {
+      var name = enc.encode(f.name), data = typeof f.data === "string" ? enc.encode(f.data) : f.data, crc = crc32(data);
+      var lh = new DataView(new ArrayBuffer(30));
+      lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true); lh.setUint16(8, 0, true);
+      lh.setUint16(10, 0, true); lh.setUint16(12, 0x21, true); lh.setUint32(14, crc, true);
+      lh.setUint32(18, data.length, true); lh.setUint32(22, data.length, true); lh.setUint16(26, name.length, true); lh.setUint16(28, 0, true);
+      var ch = new DataView(new ArrayBuffer(46));
+      ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true); ch.setUint16(10, 0, true);
+      ch.setUint16(12, 0, true); ch.setUint16(14, 0x21, true); ch.setUint32(16, crc, true); ch.setUint32(20, data.length, true); ch.setUint32(24, data.length, true);
+      ch.setUint16(28, name.length, true); ch.setUint32(42, offset, true);
+      locals.push(new Uint8Array(lh.buffer), name, data);
+      centrals.push(new Uint8Array(ch.buffer), name);
+      offset += 30 + name.length + data.length;
+    });
+    var cdSize = centrals.reduce(function (a, b) { return a + b.length; }, 0);
+    var end = new DataView(new ArrayBuffer(22));
+    end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true);
+    end.setUint32(12, cdSize, true); end.setUint32(16, offset, true);
+    return new Blob(locals.concat(centrals, [new Uint8Array(end.buffer)]), { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+  }
+  function x(t) { return String(t == null ? "" : t).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function run(t, o) {
+    o = o || {};
+    var pr = (o.b ? "<w:b/>" : "") + (o.i ? "<w:i/>" : "") + (o.color ? '<w:color w:val="' + o.color + '"/>' : "") + (o.sz ? '<w:sz w:val="' + o.sz + '"/>' : "");
+    return "<w:r>" + (pr ? "<w:rPr>" + pr + "</w:rPr>" : "") + '<w:t xml:space="preserve">' + x(t) + "</w:t></w:r>";
+  }
+  function para(runs, style) { return "<w:p>" + (style ? '<w:pPr><w:pStyle w:val="' + style + '"/></w:pPr>' : "") + runs + "</w:p>"; }
+  function textParas(t, emptyNote) {
+    t = (t || "").trim();
+    if (!t) return para(run(emptyNote || "(not answered yet)", { i: true, color: "53565A" }));
+    return t.split(/\n+/).map(function (l) { return para(run(l)); }).join("");
+  }
+  function cell(content, w, fill) {
+    return '<w:tc><w:tcPr><w:tcW w:w="' + w + '" w:type="dxa"/>' + (fill ? '<w:shd w:val="clear" w:color="auto" w:fill="' + fill + '"/>' : "") + "</w:tcPr>" + content + "</w:tc>";
+  }
+  function table(widths, header, rows) {
+    var b = '<w:top w:val="single" w:sz="4" w:color="BFBFBF"/><w:left w:val="single" w:sz="4" w:color="BFBFBF"/><w:bottom w:val="single" w:sz="4" w:color="BFBFBF"/><w:right w:val="single" w:sz="4" w:color="BFBFBF"/><w:insideH w:val="single" w:sz="4" w:color="BFBFBF"/><w:insideV w:val="single" w:sz="4" w:color="BFBFBF"/>';
+    var h = '<w:tbl><w:tblPr><w:tblW w:w="9360" w:type="dxa"/><w:tblBorders>' + b + '</w:tblBorders><w:tblLayout w:type="fixed"/><w:tblCellMar><w:top w:w="60" w:type="dxa"/><w:left w:w="100" w:type="dxa"/><w:bottom w:w="60" w:type="dxa"/><w:right w:w="100" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>' +
+      widths.map(function (w) { return '<w:gridCol w:w="' + w + '"/>'; }).join("") + "</w:tblGrid>";
+    h += "<w:tr><w:trPr><w:tblHeader/></w:trPr>" + header.map(function (t, i) { return cell(para(run(t, { b: true })), widths[i], "B9DEEF"); }).join("") + "</w:tr>";
+    rows.forEach(function (r) { h += "<w:tr><w:trPr><w:cantSplit/></w:trPr>" + r.map(function (c, i) { return cell(c, widths[i]); }).join("") + "</w:tr>"; });
+    return h + "</w:tbl>" + para("");
+  }
+  function zoneRuns(z) { return run("● ", { color: z.dot.slice(1) }) + run(z.label, { b: true }); }
+  function buildDocx(pngBytes, pw, ph) {
+    var g = grouped(), body = "";
+    body += para(run("Touchpoint 1: My GrAIdient and initial stance"), "Title");
+    body += para(run("Assignment: ", { b: true }) + run(assignment()));
+    body += para(run("My GrAIdient"), "Heading1");
+    if (pngBytes) {
+      var cx = 5943600, cy = Math.round(cx * ph / pw);
+      body += '<w:p><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="' + cx + '" cy="' + cy + '"/>' +
+        '<wp:docPr id="1" name="My GrAIdient" descr="My GrAIdient: assignment steps placed on a continuum from Totally fine to Crosses a line"/>' +
+        '<wp:cNvGraphicFramePr><a:graphicFrameLocks noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">' +
+        '<pic:pic><pic:nvPicPr><pic:cNvPr id="0" name="My-GrAIdient.png"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="rIdImg"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>' +
+        '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="' + cx + '" cy="' + cy + '"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>';
+    }
+    body += table([2900, 6460], ["Where I placed it", "Steps"], ZONES.map(function (z, i) {
+      return [para(zoneRuns(z)) + (GREY[z.id] ? para(run("Gray area", { i: true, color: "53565A", sz: 18 })) : ""),
+        g[i].length ? g[i].map(function (s) { return para(run("Step " + stepNum(s.id) + ": ", { b: true }) + run(s.text)); }).join("") : para(run("—", { color: "53565A" }))];
+    }));
+    body += para(run("Steps in the gray area and your reasoning"), "Heading1");
+    var gs = greySteps();
+    body += table([3600, 5760], ["Step", "Why I think it’s in the gray area"], gs.length ? gs.map(function (s) {
+      return [para(run("Step " + stepNum(s.id) + ": ", { b: true }) + run(s.text)) + para(zoneRuns(ZONES[zoneIdx(state.pos[s.id].x)])), textParas(state.why[s.id], "(no reasoning yet)")];
+    }) : [[para(run("(none)", { i: true })), para("")]]);
+    body += para(run(Q.values), "Heading1") + textParas(state.refl.values);
+    body += para(run(Q.ethical), "Heading1") + textParas(state.refl.ethical);
+    body += para(run("Bring together your answers to the questions above, and write your initial stance on AI in education."), "Heading1") + textParas(state.refl.stance);
+
+    var NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"';
+    var doc = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document ' + NS + "><w:body>" + body +
+      '<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr></w:body></w:document>';
+    var styles = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
+      '<w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:eastAsia="Arial" w:cs="Arial"/><w:color w:val="2E2D29"/><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:rPrDefault>' +
+      '<w:pPrDefault><w:pPr><w:spacing w:after="80" w:line="276" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>' +
+      '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style>' +
+      '<w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:pBdr><w:top w:val="single" w:sz="24" w:space="8" w:color="8C1515"/></w:pBdr><w:spacing w:before="0" w:after="200"/></w:pPr><w:rPr><w:rFonts w:ascii="Georgia" w:hAnsi="Georgia"/><w:b/><w:color w:val="8C1515"/><w:sz w:val="36"/></w:rPr></w:style>' +
+      '<w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="280" w:after="100"/><w:outlineLvl w:val="0"/></w:pPr><w:rPr><w:b/><w:color w:val="8C1515"/><w:sz w:val="26"/></w:rPr></w:style>' +
+      "</w:styles>";
+    var files = [
+      { name: "[Content_Types].xml", data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>' },
+      { name: "_rels/.rels", data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>' },
+      { name: "word/_rels/document.xml.rels", data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rIdStyles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>' +
+        (pngBytes ? '<Relationship Id="rIdImg" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/My-GrAIdient.png"/>' : "") + "</Relationships>" },
+      { name: "word/document.xml", data: doc },
+      { name: "word/styles.xml", data: styles }
+    ];
+    if (pngBytes) files.push({ name: "word/media/My-GrAIdient.png", data: pngBytes });
+    return makeZip(files);
+  }
+  function saveBlob(blob, name) {
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1500);
+  }
+  $("docxBtn").addEventListener("click", function () {
+    var msg = $("copied");
+    function finish(bytes, w, h) {
+      try {
+        saveBlob(buildDocx(bytes, w, h), "My-GrAIdient-Touchpoint-1.docx");
+        msg.textContent = "Downloaded My-GrAIdient-Touchpoint-1.docx. Add it to Touchpoint 1 of your playbook.";
+      } catch (e) { msg.textContent = "Download was blocked here. Use Copy my responses instead."; }
+    }
+    try {
+      var cv = drawMap();
+      cv.toBlob(function (blob) {
+        if (!blob) { finish(null); return; }
+        blob.arrayBuffer().then(function (buf) { finish(new Uint8Array(buf), cv.width, cv.height); }, function () { finish(null); });
+      }, "image/png");
+    } catch (e) { finish(null); }
+  });
+  window.addEventListener("beforeprint", function () {
+    document.querySelectorAll("#s3c textarea").forEach(function (t) { t.style.height = (t.scrollHeight + 4) + "px"; });
+  });
+
+  /* ================= navigation & render ================= */
+  var SUBS = ["a", "b", "c"];
+  function render() {
+    var a = assignment(), n = cleanSteps().length;
+    // step 1
+    $("to2").disabled = !a;
+    $("hint1").hidden = !!a;
+    // step 2
+    ["assignPill2", "assignPill3"].forEach(function (id) { $(id).innerHTML = "<b>Assignment:</b> " + esc(a); });
+    $("to3").disabled = n < MIN_STEPS;
+    $("hint2").textContent = n < MIN_STEPS ? "Add at least " + MIN_STEPS + " steps to continue (" + n + " so far)." : n + " steps";
+    // visibility
+    $("s1").hidden = state.step !== 1;
+    $("s2").hidden = state.step !== 2;
+    $("step3").hidden = state.step !== 3;
+    $("s3a").hidden = state.sub !== "a";
+    $("s3b").hidden = state.sub !== "b";
+    $("s3c").hidden = state.sub !== "c";
+    // progress line
+    var cur = curIdx(), reach = maxIdx();
+    var LABELS = ["Identify an assignment", "Break it into steps", "Place the steps", "Explain your reasoning", "Review your stance"];
+    document.querySelectorAll("#stepper button").forEach(function (b) {
+      var i = +b.dataset.i, done = i <= reach && i !== cur;
+      b.disabled = i > reach;
+      b.classList.toggle("done", done);
+      b.querySelector(".node").textContent = done ? "\u2713" : ["1", "2", "3a", "3b", "3c"][i];
+      if (i === cur) b.setAttribute("aria-current", "step"); else b.removeAttribute("aria-current");
+      b.setAttribute("aria-label", LABELS[i] + (i === cur ? " (current)" : done ? " (completed)" : i > reach ? " (not started)" : ""));
+    });
+    $("fill").style.width = (reach / 4 * 100) + "%";
+    $("group3").classList.toggle("on", reach >= 2);
+    $("progText").textContent = "Step " + ["1", "2", "3a", "3b", "3c"][cur] + ": " + LABELS[cur];
+    if (state.step === 3) {
+      var slot = state.sub === "c" ? $("reviewSlot") : $("boardSlotA");
+      if (board.parentNode !== slot) slot.appendChild(board);
+      board.classList.toggle("locked", state.sub === "c");
+      if (state.sub !== "b") renderBoard();
+    }
+  }
+  function curIdx() { return state.step < 3 ? state.step - 1 : 2 + SUBS.indexOf(state.sub); }
+  function maxIdx() { return state.maxStep < 3 ? state.maxStep - 1 : 2 + SUBS.indexOf(state.maxSub); }
+  function go(step, sub) {
+    state.step = step;
+    if (sub) state.sub = sub;
+    state.maxStep = Math.max(state.maxStep, step);
+    if (step === 3 && SUBS.indexOf(state.sub) > SUBS.indexOf(state.maxSub)) state.maxSub = state.sub;
+    if (step === 2) { if (!state.steps.length) { addStep(""); } buildStickies(); }
+    if (step === 3 && state.sub === "b") buildNotes();
+    save(); render();
+    if (step === 3 && state.sub === "c") buildReview();
+    if (window.self !== window.top) {
+      // embedded: ask Canvas to scroll the page back to the top of the activity
+      try { window.parent.postMessage(JSON.stringify({ subject: "lti.scrollToTop" }), "*"); } catch (e) {}
+    } else {
+      try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch (e) { window.scrollTo(0, 0); }
+    }
+  }
+  // if a step was placed and then all steps changed, re-lock later sub-steps when needed
+  function allPlaced() { return cleanSteps().every(function (s) { return state.pos[s.id]; }); }
+
+  $("stepper").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b || b.disabled) return;
+    var i = +b.dataset.i;
+    if (i < 2) { go(i + 1); return; }
+    var sub = SUBS[i - 2];
+    if (sub !== "a" && !allPlaced()) { go(3, "a"); announce("Place every step first."); return; }
+    go(3, sub);
+  });
+  $("to2").addEventListener("click", function () { go(2); });
+  $("back1").addEventListener("click", function () { go(1); });
+  $("to3").addEventListener("click", function () { go(3, "a"); });
+  $("back2").addEventListener("click", function () { go(2); });
+  $("toB").addEventListener("click", function () { go(3, "b"); });
+  $("backA").addEventListener("click", function () { go(3, "a"); });
+  $("toC").addEventListener("click", function () { go(3, "c"); });
+  $("backB").addEventListener("click", function () { go(3, "b"); });
+
+  function armedReset(btn, label) {
+    if (btn.dataset.armed) {
+      delete btn.dataset.armed; btn.textContent = label;
+      Object.keys(chips).forEach(function (id) { chips[id].remove(); }); chips = {};
+      state = fresh(); save(); buildChoices(); go(1); return;
+    }
+    btn.dataset.armed = "1"; btn.textContent = "Click again to clear everything";
+    setTimeout(function () { if (btn.dataset.armed) { delete btn.dataset.armed; btn.textContent = label; } }, 3000);
+  }
+  $("resetBtn").addEventListener("click", function () { armedReset(this, "Start over"); });
+  $("restart").addEventListener("click", function () { armedReset(this, "Start a new assignment"); });
+
+  var rt; window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(render, 80); });
+
+  /* init */
+  buildChoices();
+  if (state.step === 2) buildStickies();
+  if (state.step === 3 && state.sub === "b") buildNotes();
+  if (state.step === 3 && state.sub === "c") buildReview();
+  render();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(render);
+})();
+</script>
+<script>
+  /* Canvas auto-height: tell Canvas how tall the activity is so the page has a single scrollbar */
+  (function () {
+    if (window.self === window.top) return;
+    var app = document.querySelector(".app");
+    var last = 0, timer = null;
+    function contentHeight() { return Math.ceil(app.getBoundingClientRect().height) + 4; }
+    function send() {
+      var h = contentHeight();
+      if (Math.abs(h - last) < 3) return;
+      last = h;
+      try { window.parent.postMessage(JSON.stringify({ subject: "lti.frameResize", height: h }), "*"); } catch (e) {}
+      // If Canvas resized the frame to match, hide the inner scrollbar
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        if (Math.abs(window.innerHeight - h) <= 40) document.documentElement.classList.add("fitted");
+      }, 700);
+    }
+    if ("ResizeObserver" in window) new ResizeObserver(send).observe(app);
+    else setInterval(send, 400);
+    window.addEventListener("load", send);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(send);
+    send();
+  })();
+</script>
+</body>
+</html>
