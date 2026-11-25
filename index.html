@@ -550,8 +550,6 @@
         <div class="btns">
           <button type="button" class="btn" id="docxBtn">Download as Word document</button>
           <button type="button" class="btn outline" id="copyBtn">Copy my responses</button>
-          <button type="button" class="btn outline" id="pngBtn">Download my GrAIdient (image)</button>
-          <button type="button" class="btn outline" id="printBtn">Print or save as PDF</button>
         </div>
         <div class="copied" id="copied" aria-live="polite"></div>
         <p class="save-note">Your work is saved only in this browser. Copy it into your playbook so you have it for Touchpoint 3 and the Capstone.</p>
@@ -1006,7 +1004,7 @@
     ["values", "ethical", "stance"].forEach(function (k) { h += "<p><b>" + Q[k] + "</b></p><p>" + para(ans(k)) + "</p>"; });
     return h;
   }
-  function copied(ok) { $("copied").textContent = ok ? "Copied. Paste it into Touchpoint 1 of your playbook." : "Copy was blocked here. Use Print or save as PDF instead."; }
+  function copied(ok) { $("copied").textContent = ok ? "Copied. Paste it into Touchpoint 1 of your playbook." : "Copy was blocked here. Use Download as Word document instead."; }
   $("copyBtn").addEventListener("click", function () {
     var html = exportHTML(), txt = exportText();
     function fallback() {
@@ -1210,7 +1208,7 @@
       try {
         saveBlob(buildDocx(bytes, w, h), "My-GrAIdient-Touchpoint-1.docx");
         msg.textContent = "Downloaded My-GrAIdient-Touchpoint-1.docx. Add it to Touchpoint 1 of your playbook.";
-      } catch (e) { msg.textContent = "Download was blocked here. Use Copy or Print instead."; }
+      } catch (e) { msg.textContent = "Download was blocked here. Use Copy my responses instead."; }
     }
     try {
       var cv = drawMap();
@@ -1220,22 +1218,9 @@
       }, "image/png");
     } catch (e) { finish(null); }
   });
-  $("pngBtn").addEventListener("click", function () {
-    try {
-      var cv = drawMap();
-      cv.toBlob(function (blob) {
-        var a = document.createElement("a");
-        a.href = URL.createObjectURL(blob); a.download = "My-GrAIdient.png";
-        document.body.appendChild(a); a.click(); a.remove();
-        setTimeout(function () { URL.revokeObjectURL(a.href); }, 1500);
-        $("copied").textContent = "Downloaded My-GrAIdient.png. Insert it into Touchpoint 1 of your playbook.";
-      });
-    } catch (e) { $("copied").textContent = "Download was blocked here. Use Print or save as PDF instead."; }
-  });
   window.addEventListener("beforeprint", function () {
     document.querySelectorAll("#s3c textarea").forEach(function (t) { t.style.height = (t.scrollHeight + 4) + "px"; });
   });
-  $("printBtn").addEventListener("click", function () { window.print(); });
 
   /* ================= navigation & render ================= */
   var SUBS = ["a", "b", "c"];
